@@ -26,24 +26,23 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Align to start, let margin handle centering */
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 20px 0; /* Vertical padding only */
-            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
-            width: 100%; /* Ensure body takes full width */
+            padding: 20px 0;
+            overflow-x: hidden; 
+            width: 100%; 
         }
 
-        /* Game Container Styling - Focus, Angular, and Glowing */
         .game-container {
             background-color: #1a1a2b; /* Darker, slightly purple background */
-            border: 2px solid var(--saber-color-primary, #00fffb); /* Neon Cyan border */
-            border-radius: 4px; /* Slightly sharper edges */
+            border: 2px solid var(--saber-color-primary, #00fffb); 
+            border-radius: 4px;
             box-shadow: 0 0 25px var(--saber-color-glow, rgba(0, 255, 251, 0.4)), 0 0 50px var(--saber-color-glow-light, rgba(0, 255, 251, 0.1)); 
             padding: 20px;
-            width: 95%; /* FLUID WIDTH: Use percentage for reliability */
-            max-width: 600px; /* Hard limit for desktop */
-            margin: 20px auto; /* CRITICAL: Ensure horizontal centering */
+            width: 95%; 
+            max-width: 600px;
+            margin: 20px auto; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -51,58 +50,67 @@
             position: relative;
             transition: all 0.3s ease;
         }
+
+        /* Class for screen shake */
+        .game-container.shake {
+            animation: shake 0.15s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
         
         h1 {
             font-size: 2.5rem;
-            color: var(--saber-color-primary, #ff33cc); /* Vibrant Magenta/Pink for title */
+            color: var(--saber-color-primary, #ff33cc);
             text-shadow: 0 0 10px var(--saber-color-primary, #ff33cc), 0 0 20px rgba(255, 51, 204, 0.6);
             letter-spacing: 5px;
             margin-bottom: 5px;
             transition: color 0.3s, text-shadow 0.3s;
         }
 
-        /* --- MOBILE OPTIMIZATIONS START --- */
         @media (max-width: 640px) {
             .game-container {
-                padding: 10px; /* REDUCED PADDING for maximum canvas space */
+                padding: 10px;
                 gap: 15px;
                 margin: 10px auto;
             }
             h1 {
-                font-size: 1.8rem; /* Smaller title on mobile */
+                font-size: 1.8rem;
                 letter-spacing: 3px;
             }
             .info-panel {
-                font-size: 1rem; /* Smaller text for stats */
+                font-size: 1rem;
                 padding: 8px 10px;
             }
             #startButton, .overlay-button {
-                padding: 12px 25px; /* Slightly smaller button for better fit */
+                padding: 12px 25px;
                 font-size: 1rem;
             }
             .paddle-controls {
                 font-size: 0.9rem;
             }
         }
-        /* --- MOBILE OPTIMIZATIONS END --- */
 
-
-        /* Canvas Styling - The Central Focus */
         #gameCanvas {
             background-color: #000000;
             border: 3px solid var(--saber-color-primary, #00fffb);
             border-radius: 4px;
             box-shadow: inset 0 0 10px var(--saber-color-primary, #00fffb);
             cursor: none;
-            /* CRITICAL: Ensure touch interactions are handled by JS, not the browser's default actions */
             touch-action: none; 
-            width: 100%; /* Take 100% of the calculated space */
+            width: 100%; 
             aspect-ratio: 3 / 2;
             transition: border-color 0.3s, box-shadow 0.3s;
             min-height: 200px; 
         }
 
-        /* Info Panel - Digital Readout Style */
         .info-panel {
             display: flex;
             justify-content: space-between;
@@ -115,12 +123,14 @@
             font-weight: bold;
         }
 
-        .score-label { color: var(--saber-color-primary, #00fffb); text-shadow: 0 0 5px var(--saber-color-primary, #00fffb); }
-        .life-icon { color: #ff33cc; text-shadow: 0 0 5px #ff33cc; } /* Fixed color for contrast */
-        .level-label { color: #ffea00; text-shadow: 0 0 5px #ffea00; } /* Fixed color for contrast */
-
-
-        /* Paddle Controls Styling - Integrated Look */
+        /* Score animation helper */
+        .score-label { 
+            color: var(--saber-color-primary, #00fffb); 
+            text-shadow: 0 0 5px var(--saber-color-primary, #00fffb); 
+        }
+        .life-icon { color: #ff33cc; text-shadow: 0 0 5px #ff33cc; } 
+        .level-label { color: #ffea00; text-shadow: 0 0 5px #ffea00; } 
+        
         .paddle-controls {
             width: 100%;
             padding: 0 10px;
@@ -131,22 +141,39 @@
             color: #d4d4ff;
         }
         
-        .color-controls {
-            margin-top: -10px;
+        /* Styles for the color swatch buttons */
+        .color-controls.paddle-controls {
             justify-content: flex-start;
+            align-items: center;
         }
-        
-        #saberColorSelect {
-            background-color: #2b2b4c;
-            border: 1px solid var(--saber-color-primary, #00fffb);
-            color: #d4d4ff;
-            padding: 4px 8px;
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border: 3px solid transparent;
             border-radius: 4px;
             cursor: pointer;
-            transition: border-color 0.3s;
+            transition: all 0.15s ease;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            padding: 0;
         }
-        
-        /* Custom Slider Style */
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: #d4d4ff; /* Light glow around the active one */
+            transform: scale(1.15);
+            box-shadow: 0 0 15px var(--saber-color-primary), 0 0 30px var(--saber-color-glow-light); 
+        }
+
+        .cyan-swatch { background-color: #00fffb; }
+        .red-swatch { background-color: #ff4136; }
+        .green-swatch { background-color: #00ff00; }
+        .purple-swatch { background-color: #cc00ff; }
+        /* END NEW STYLES */
+
         #paddleSizeSlider {
             -webkit-appearance: none;
             appearance: none;
@@ -157,14 +184,10 @@
             cursor: pointer;
             box-shadow: inset 0 0 5px var(--saber-color-primary, #00fffb);
             transition: box-shadow 0.3s;
-            /* Ensure good touch target on mobile */
             padding: 5px 0; 
             margin: 0;
         }
         
-        /* NOTE: Thumb styling must be set via JS injected CSS due to inability to use CSS variables with pseudo-elements in some browsers. */
-        
-        /* Start/Action Button - High Contrast, Angular, and Pressing Effect */
         #startButton, .overlay-button {
             padding: 14px 30px;
             font-size: 1.2rem;
@@ -192,7 +215,6 @@
             box-shadow: 0 0 5px #ff33cc;
         }
 
-        /* Game Message Overlay */
         #messageOverlay {
             position: absolute;
             top: 0;
@@ -273,8 +295,27 @@
             transition: opacity 0.3s;
             pointer-events: none;
         }
+
+        /* Boss Health Bar Styling */
+        #bossHealthBar {
+            width: 80%;
+            height: 15px;
+            background-color: #440000;
+            border: 2px solid #ff4136;
+            margin: 10px auto;
+            border-radius: 5px;
+            overflow: hidden;
+            display: none; /* Hidden by default */
+            transition: all 0.3s ease;
+        }
+
+        #bossHealthFill {
+            height: 100%;
+            width: 100%; /* Default to full */
+            background-color: #ff4136;
+            transition: width 0.1s linear;
+        }
     </style>
-    <!-- Placeholder for JS-injected styles needed for cross-browser slider thumb styling -->
     <style id="saber-slider-style"></style>
 </head>
 <body>
@@ -286,45 +327,46 @@
             <div class="life-icon">LIVES: <span id="livesValue">3</span></div>
             <div class="level-label">LEVEL: <span id="levelValue">1</span></div>
         </div>
+
+        <!-- Boss Health Bar -->
+        <div id="bossHealthBar">
+            <div id="bossHealthFill"></div>
+        </div>
         
-        <!-- Lightsaber Size Control Slider (Default value increased for mobile) -->
         <div class="paddle-controls">
             <label for="paddleSizeSlider">LIGHTSABER SIZE:</label>
             <input type="range" id="paddleSizeSlider" min="50" max="150" value="100">
         </div>
         
-        <!-- Lightsaber Color Selector -->
+        <!-- Color Swatch Controls -->
         <div class="color-controls paddle-controls" style="margin-top: -10px;">
-            <label for="saberColorSelect">SABER COLOR:</label>
-            <select id="saberColorSelect">
-                <option value="cyan">Cyan</option>
-                <option value="red">Red</option>
-                <option value="green">Green</option>
-                <option value="purple">Purple</option>
-            </select>
+            <label>SABER COLOR:</label>
+            <div id="colorSwatches" style="display: flex; gap: 15px;">
+                <button class="color-swatch cyan-swatch" data-color="cyan" title="Cyan"></button>
+                <button class="color-swatch red-swatch" data-color="red" title="Red"></button>
+                <button class="color-swatch green-swatch" data-color="green" title="Green"></button>
+                <button class="color-swatch purple-swatch" data-color="purple" title="Purple"></button>
+            </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
         <button id="startButton">ENGAGE HYPERDRIVE</button>
 
-        <!-- Force Shield Visual Element -->
         <div class="force-shield" id="forceShield" style="opacity: 0;"></div>
 
         <div id="messageOverlay">
             <div id="messageContent">
                 <p id="messageText">Welcome, Jedi!</p>
-                <!-- High Score List Placeholder -->
                 <ul id="highScoreList" style="display: none;">
                     <li>HIGH SCORES</li>
                 </ul>
                 <button id="overlayButton" class="overlay-button">Ready</button>
-                <small id="userIdDisplay" style="margin-top: 10px; color: #555; font-size: 0.7rem;"></small>
+                <small id="userIdDisplay" style="margin-top: 10px; color: #555; font-size: 0.7rem;">User ID: loading</small>
             </div>
         </div>
     </div>
 
     <script>
-        // Wrap the entire script in an IIFE to prevent global variable scope conflicts.
         (function() {
             // --- FIREBASE INITIALIZATION ---
             let db, auth, userId = 'loading';
@@ -333,18 +375,16 @@
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             const HIGHSCORE_COLLECTION = `artifacts/${appId}/public/data/high_scores`;
 
-            // Canvas dimensions (defined globally within IIFE)
             let W, H; 
 
             async function initFirebase() {
                 try {
-                    const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, onAuthStateChanged } = window.firebase;
+                    const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, onAuthStateChanged, addDoc, collection, query, orderBy, limit, getDocs } = window.firebase;
                     
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     auth = getAuth(app);
 
-                    // Sign in with custom token or anonymously
                     if (initialAuthToken) {
                         await signInWithCustomToken(auth, initialAuthToken);
                     } else {
@@ -355,15 +395,57 @@
                         if (user) {
                             userId = user.uid;
                         } else {
-                            // If user is null (shouldn't happen with anon/custom sign-in), use a random ID
                             userId = crypto.randomUUID(); 
                         }
                         document.getElementById('userIdDisplay').textContent = `User ID: ${userId}`;
-                        console.log("Firebase Auth Ready. User ID:", userId);
                     });
 
                 } catch (error) {
                     console.error("Firebase initialization failed:", error);
+                }
+            }
+            
+            async function saveHighScore() {
+                if (!db || !userId) return;
+                try {
+                    const { addDoc, collection } = window.firebase;
+                    await addDoc(collection(db, HIGHSCORE_COLLECTION), {
+                        score: score,
+                        userId: userId,
+                        timestamp: Date.now()
+                    });
+                } catch (error) {
+                    console.error("Error saving high score:", error);
+                }
+            }
+            
+            async function loadHighScores() {
+                if (!db) return;
+                try {
+                    const { collection, query, orderBy, limit, getDocs } = window.firebase;
+                    const q = query(collection(db, HIGHSCORE_COLLECTION), orderBy("score", "desc"), limit(5));
+                    const querySnapshot = await getDocs(q);
+                    
+                    const scores = [];
+                    querySnapshot.forEach((doc) => {
+                        scores.push(doc.data());
+                    });
+
+                    const list = document.getElementById('highScoreList');
+                    list.innerHTML = '<li>HIGH SCORES</li>';
+                    if (scores.length > 0) {
+                        scores.forEach((s, index) => {
+                            const li = document.createElement('li');
+                            const displayUserId = s.userId === userId ? 'YOU' : s.userId.substring(0, 8) + '...';
+                            li.innerHTML = `${index + 1}. ${displayUserId} <span>${s.score}</span>`;
+                            list.appendChild(li);
+                        });
+                        list.style.display = 'block';
+                    } else {
+                        list.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error("Error loading high scores:", error);
                 }
             }
 
@@ -375,24 +457,27 @@
             const messageText = document.getElementById('messageText');
             const overlayButton = document.getElementById('overlayButton');
             const paddleSizeSlider = document.getElementById('paddleSizeSlider');
-            const saberColorSelect = document.getElementById('saberColorSelect');
+            const colorSwatchesContainer = document.getElementById('colorSwatches'); 
             const highScoreList = document.getElementById('highScoreList');
             const forceShield = document.getElementById('forceShield');
             const gameContainer = document.getElementById('gameContainer');
+            const bossHealthBar = document.getElementById('bossHealthBar');
+            const bossHealthFill = document.getElementById('bossHealthFill');
+            const scoreValueEl = document.getElementById('scoreValue');
 
             const ballRadius = 6;
             const paddleH = 8;
             const brickRowCount = 5;
-            const brickColumnCount = 8; // Keep fixed number of columns for level layout consistency
+            const brickColumnCount = 8;
+            const BOSS_LEVEL = 6; 
 
-            // Dynamic brick properties - will be updated in updateCanvasDimensions()
             let brickW = 60; 
             let brickH = 20; 
             let brickPadding = 10;
             let brickOffsetTop = 40; 
             let brickOffsetLeft = 30; 
 
-            const maxLevels = 5;
+            const maxLevels = 5; 
 
             // --- LIGHTSABER COLOR STATE ---
             const COLOR_MAP = {
@@ -401,76 +486,75 @@
                 green: { blade: '#00ff00', glow: 'rgba(0, 255, 0, 0.4)', shadow: 'rgba(0, 255, 0, 0.1)' },
                 purple: { blade: '#cc00ff', glow: 'rgba(204, 0, 255, 0.4)', shadow: 'rgba(204, 0, 255, 0.1)' }
             };
-            let currentSaberColor = 'cyan'; // Default
+            let currentSaberColor = 'cyan';
             let lightsaberColor = COLOR_MAP[currentSaberColor].blade;
 
             // --- GAME STATE VARIABLES ---
             let gameRunning = false;
+            let levelComplete = false; 
             let score = 0;
             let lives = 3;
             let currentLevel = 1;
-            let x, y, dx, dy; // Ball position and velocity (deprecated, use balls[0] for primary)
-            let paddleW = 100; // Increased default paddle width for better mobile touch targeting
+            let paddleW = 100;
             let paddleX; 
-            let lastPaddleX = 0; // For paddle velocity tracking
+            let lastPaddleX = 0;
 
-            // Dynamic entities
+            let shakeDuration = 0;
+            let shakeIntensity = 0;
+            
+            let boss = null;
+            
             let bricks = [];
             let stars = [];
             let particles = [];
             let powerUps = [];
-            let balls = []; // For multi-ball power-up
+            let balls = [];
 
-            // Power-Up State
             let isPaddleExtended = false;
             let shieldActive = false;
             let powerUpTimer;
 
             // Audio Synths
-            let blasterSynth, saberSynth, bgSynth, fanfareSynth;
+            let blasterSynth, saberSynth, bgSynth, fanfareSynth, explosionSynth;
             let isAudioReady = false;
             let starScrollY = 0;
             const STAR_SPEED = 0.5;
 
             /* Level Configuration Data */
             const levelData = [
-                // L1: Imperial Blockade (Type 1 only)
                 [[1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1]],
-                // L2: TIE Fighter Patrol (Type 1 & 2)
                 [[1, 2, 1, 2, 2, 1, 2, 1], [2, 1, 1, 1, 1, 1, 1, 2], [1, 1, 2, 0, 0, 2, 1, 1], [2, 1, 1, 1, 1, 1, 1, 2], [1, 2, 1, 2, 2, 1, 2, 1]],
-                // L3: Dreadnought Fleet (Type 2 & 3)
                 [[3, 0, 2, 2, 2, 2, 0, 3], [2, 3, 0, 3, 3, 0, 3, 2], [3, 0, 2, 0, 0, 2, 0, 3], [2, 3, 0, 3, 3, 0, 3, 2], [3, 0, 2, 2, 2, 2, 0, 3]],
-                // L4: Mixed Assault (Tight Formation)
                 [[3, 2, 3, 1, 1, 3, 2, 3], [2, 1, 2, 0, 0, 2, 1, 2], [3, 2, 3, 1, 1, 3, 2, 3], [2, 1, 2, 0, 0, 2, 1, 2], [3, 2, 3, 1, 1, 3, 2, 3]],
-                // L5: Dreadnought Hammer
                 [[3, 3, 3, 3, 3, 3, 3, 3], [0, 2, 0, 2, 2, 0, 2, 0], [3, 3, 3, 3, 3, 3, 3, 3], [0, 2, 0, 2, 2, 0, 2, 0], [3, 3, 3, 3, 3, 3, 3, 3]]
             ];
 
             // Power-Up Definitions
             const PU_TYPE = {
-                EXTEND: 1, // Lightsaber Extension (Yellow)
-                MULTI: 2,  // Multi-Plasma (Red/Magenta)
-                SHIELD: 3  // Force Shield (Green)
+                EXTEND: 1, 
+                MULTI: 2,  
+                SHIELD: 3 
             };
             const PU_COLORS = {
-                [PU_TYPE.EXTEND]: '#ffea00', // Yellow
-                [PU_TYPE.MULTI]: '#ff33cc',  // Magenta (Fixed)
-                [PU_TYPE.SHIELD]: '#00ff00'  // Green (Fixed)
+                [PU_TYPE.EXTEND]: '#ffea00', 
+                [PU_TYPE.MULTI]: '#ff33cc', 
+                [PU_TYPE.SHIELD]: '#00ff00'
             };
-            const PU_DURATION = 10000; // 10 seconds
+            const PU_DURATION = 10000;
 
             // --- COLOR CONTROL FUNCTION ---
             function updateSaberColor(newColorKey) {
+                // *** FIX: Save the current paddle position before DOM manipulation ***
+                let originalPaddleX = paddleX; 
+                
                 currentSaberColor = newColorKey;
                 const colorObj = COLOR_MAP[newColorKey];
                 lightsaberColor = colorObj.blade;
                 
-                // Update CSS Variables for all elements that rely on it (mostly outside the canvas)
                 document.documentElement.style.setProperty('--saber-color-primary', colorObj.blade);
                 document.documentElement.style.setProperty('--saber-color-glow', colorObj.glow);
                 document.documentElement.style.setProperty('--saber-color-glow-light', colorObj.shadow);
 
-                // Dynamically update the slider thumb color using injected CSS
                 const styleTag = document.getElementById('saber-slider-style');
                 styleTag.innerHTML = `
                     #paddleSizeSlider::-webkit-slider-thumb { 
@@ -482,6 +566,20 @@
                         box-shadow: 0 0 10px ${colorObj.blade}, 0 0 5px #ff33cc;
                     }
                 `;
+                
+                // Handle active class on swatches
+                const swatches = document.querySelectorAll('.color-swatch');
+                swatches.forEach(swatch => {
+                    swatch.classList.remove('active');
+                    if (swatch.dataset.color === newColorKey) {
+                        swatch.classList.add('active');
+                    }
+                });
+
+                // *** FIX: Restore the paddle position immediately after DOM manipulation ***
+                if (gameRunning && originalPaddleX !== undefined) {
+                    paddleX = originalPaddleX;
+                }
             }
 
             // --- TONE.JS SOUND SETUP ---
@@ -508,180 +606,157 @@
                         envelope: { attack: 0.02, decay: 0.3, sustain: 0, release: 0.5 }
                     }).toDestination();
 
+                    // Explosion Synth (for powerful hits/Boss hits)
+                    explosionSynth = new Tone.MembraneSynth({
+                        volume: -10,
+                        pitchDecay: 0.05,
+                        octaves: 8,
+                        envelope: {
+                            attack: 0.001,
+                            decay: 0.4,
+                            sustain: 0.01,
+                            release: 0.7,
+                            attackCurve: 'exponential'
+                        }
+                    }).toDestination();
+
+
                     isAudioReady = true;
                 }).catch(e => console.error("Tone.js could not start audio context:", e));
             }
 
-            function startBGHum() {
+            function startBGHum() { 
                 if (!isAudioReady) return;
-                bgSynth.triggerAttackRelease(["C2", "G2"], "4n"); // Simple low chord
+                bgSynth.triggerAttackRelease(["C2", "G2"], "4n");
                 Tone.Transport.scheduleRepeat(() => {
                     bgSynth.triggerAttackRelease(["C2", "G2"], "4n");
                 }, "2n");
                 Tone.Transport.start();
             }
 
-            function stopBGHum() {
+            function stopBGHum() { 
                 if (Tone.Transport.state === 'started') {
                     Tone.Transport.stop();
                     bgSynth.releaseAll();
                 }
             }
 
-            function playFanfare() {
+            function playFanfare() { 
                  if (!isAudioReady) return;
                  fanfareSynth.triggerAttackRelease(["C5", "E5", "G5"], "4n");
             }
 
             // --- VISUAL & SETUP UTILITIES ---
-
-            function initStars() {
-                stars = [];
-                // Re-initialize stars based on current W and H
-                const numStars = (W * H) / 1000; 
-                for (let i = 0; i < numStars; i++) {
-                    stars.push({
-                        x: Math.random() * W,
-                        y: Math.random() * H,
-                        r: Math.random() * 1.5 + 0.5,
-                        // Rare stars use the current lightsaber color
-                        color: Math.random() > 0.9 ? lightsaberColor : '#FFFFFF' 
-                    });
-                }
-            }
             
-            function drawStars() {
-                ctx.fillStyle = '#000000'; // Fill background, crucial for smooth animation
-                ctx.fillRect(0, 0, W, H);
-                
-                starScrollY += STAR_SPEED;
-                
-                // Draw distant nebula effect
-                ctx.fillStyle = 'rgba(0, 0, 50, 0.1)'; 
-                ctx.fillRect(0, 0, W, H);
-
-                for (let i = 0; i < stars.length; i++) {
-                    const star = stars[i];
-                    
-                    star.y += STAR_SPEED;
-                    if (star.y > H) {
-                        star.y = 0; // Wrap to top
-                        star.x = Math.random() * W;
-                        // Recolor the wrapped star, 10% chance to be saber color
-                        star.color = Math.random() > 0.9 ? lightsaberColor : '#FFFFFF';
-                    }
-
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-                    ctx.fillStyle = star.color;
-                    ctx.fill();
-                    ctx.closePath();
-                }
+            /** NEW HELPER FUNCTION: Clamps paddleX within valid boundaries */
+            function clampPaddleX() {
+                 if (W === undefined || paddleX === undefined) return;
+                 const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                 paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
             }
 
-            // REVISED FUNCTION: Dynamically calculate dimensions based on container's computed style
             function updateCanvasDimensions() {
                 const container = document.getElementById('gameContainer');
-                
-                // Get the computed style of the container to read padding applied by CSS/media queries
                 const style = window.getComputedStyle(container);
                 const paddingLeft = parseFloat(style.paddingLeft) || 0;
                 const paddingRight = parseFloat(style.paddingRight) || 0;
-                
-                // Target width is the container's clientWidth minus its internal padding
                 const targetWidth = container.clientWidth - paddingLeft - paddingRight;
 
-                // W is the internal drawing width, clamped to a maximum size
                 W = Math.min(targetWidth, 600);
                 H = Math.round(W * (2 / 3)); 
 
-                // Set the internal pixel dimensions of the canvas
                 canvas.width = W;
                 canvas.height = H;
-                
-                // Set the canvas element's style width to match the internal size (optional, but ensures pixel perfect rendering)
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
 
-                // --- BRICK SCALING LOGIC (NEW) ---
-                const BRICK_FIELD_RATIO = 0.95; // Use 95% of W for brick area
+                // --- BRICK SCALING LOGIC ---
+                const BRICK_FIELD_RATIO = 0.95;
                 const brickFieldW = W * BRICK_FIELD_RATIO;
-
-                // Total number of gaps/paddings (8 bricks have 7 paddings in between)
                 const numPaddings = brickColumnCount - 1; 
 
-                // Aim for a Brick Width that is 5 times the padding size (6 units total: 5W + 1P)
-                // Total units = (8 * 5W) + (7 * 1P) = 40 + 7 = 47 units
                 const totalUnits = (brickColumnCount * 5) + numPaddings; 
-                
                 const unitSize = brickFieldW / totalUnits;
 
-                // Update global brick properties to be proportional
-                brickPadding = Math.max(2, Math.round(unitSize * 1)); // Min 2px padding
-                brickW = Math.max(10, Math.round(unitSize * 5)); // Min 10px width
-                brickH = Math.round(H * 0.04); // Proportional height (e.g., 4% of canvas height)
+                brickPadding = Math.max(2, Math.round(unitSize * 1));
+                brickW = Math.max(10, Math.round(unitSize * 5));
+                brickH = Math.round(H * 0.04); 
 
-                // Recalculate offset based on the *actual* calculated brick field width
                 const actualBrickFieldW = (brickColumnCount * brickW) + (numPaddings * brickPadding);
                 brickOffsetLeft = (W - actualBrickFieldW) / 2;
-
-                // Ensure brick offset top is relative to the new height
                 brickOffsetTop = Math.max(30, Math.round(H * 0.08)); 
-                // ---------------------------------
-
+                
                 if (stars.length === 0 || W !== canvas.width || H !== canvas.height) { 
                     initStars(); 
                 }
 
+                // Initialize/update boss size based on new W/H
+                if (boss) {
+                    boss.w = W * 0.9;
+                    boss.h = H * 0.2;
+                    boss.x = (W - boss.w) / 2;
+                    boss.y = H * 0.05;
+                }
+
                 if (paddleX === undefined) {
+                    // Initialize paddleX ONLY if it hasn't been set yet (e.g., first load)
                     paddleX = (W - paddleW) / 2;
-                } else {
-                    // Re-center paddle if resizing caused it to go off screen
-                    const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                    paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW)); 
                 }
                 
-                // Initialize/reset all balls
                 if (balls.length === 0) {
                     balls.push({x: W / 2, y: H - 30, dx: 0, dy: 0});
-                }
-                // Update primary ball position if undefined (first time run)
-                if (x === undefined) {
-                    x = balls[0]?.x || W/2;
-                    y = balls[0]?.y || H-30;
-                } else {
-                    x = balls[0]?.x || W/2;
-                    y = balls[0]?.y || H-30;
                 }
             }
 
             function initBricks(level) {
-                if (level > maxLevels || level < 1) { level = 1; }
+                boss = null;
+                bossHealthBar.style.display = 'none';
 
-                const layout = levelData[level - 1];
-                bricks = [];
-                for (let c = 0; c < brickColumnCount; c++) {
-                    bricks[c] = [];
-                    for (let r = 0; r < brickRowCount; r++) {
-                        const type = layout[r][c];
-                        bricks[c][r] = { 
-                            x: 0, y: 0, 
-                            status: type, 
-                            type: type 
-                        }; 
+                if (level === BOSS_LEVEL) {
+                    const bossW = W * 0.9;
+                    const bossH = H * 0.2;
+                    boss = {
+                        x: (W - bossW) / 2,
+                        y: H * 0.05,
+                        w: bossW,
+                        h: bossH,
+                        maxHealth: 50 + (currentLevel * 10), 
+                        health: 50 + (currentLevel * 10),
+                        color: '#ff4136', 
+                        isHit: false
+                    };
+                    bossHealthBar.style.display = 'block';
+                    updateBossHealthBar();
+                    bricks = []; 
+                } else if (level > maxLevels) { 
+                    bricks = []; 
+                } else {
+                    const layout = levelData[level - 1]; 
+                    bricks = [];
+                    for (let c = 0; c < brickColumnCount; c++) {
+                        bricks[c] = [];
+                        for (let r = 0; r < brickRowCount; r++) {
+                            const type = layout[r][c];
+                            bricks[c][r] = { x: 0, y: 0, status: type, type: type }; 
+                        }
                     }
                 }
             }
+            
+            // Screen Shake Utility
+            function screenShake(duration, intensity = 1) {
+                if (shakeDuration > 0) return; 
+                shakeDuration = duration;
+                shakeIntensity = intensity;
+                gameContainer.classList.add('shake');
+            }
 
-            function resetBallAndPaddle() {
+            function resetBallAndPaddle() { 
                 if (W === undefined || H === undefined) updateCanvasDimensions();
                 
-                // Reset power-ups on life loss
                 if (isPaddleExtended) clearPowerUpTimer();
                 
-                // Reset all balls to a single starting ball
                 balls = [];
-                // Slightly slower initial speed for easier start on mobile
                 const speed = 3.0 + (currentLevel - 1) * 0.4; 
                 const angleFactor = 0.7; 
                 const initialDx = speed * (Math.random() < 0.5 ? angleFactor : -angleFactor); 
@@ -694,179 +769,124 @@
                     dy: initialDy
                 });
 
-                // Update primary ball for legacy variables (still used for canvas center)
-                x = balls[0].x;
-                y = balls[0].y;
-                dx = balls[0].dx;
-                dy = balls[0].dy;
-
-
                 paddleX = (W - paddleW) / 2;
                 lastPaddleX = paddleX;
             }
 
-            // --- GAME LOGIC FUNCTIONS ---
-
-            function spawnParticles(px, py, color) {
-                for (let i = 0; i < 15; i++) {
-                    particles.push({
-                        x: px + brickW / 2,
-                        y: py + brickH / 2,
-                        vx: (Math.random() - 0.5) * 5,
-                        vy: (Math.random() - 0.5) * 5,
-                        r: Math.random() * 2 + 1,
-                        alpha: 1,
-                        color: color
-                    });
-                }
+            // --- DRAWING FUNCTIONS ---
+            function updateBossHealthBar() { 
+                if (!boss) return;
+                const percentage = boss.health / boss.maxHealth;
+                bossHealthFill.style.width = `${percentage * 100}%`;
+                // Flash red when low health
+                bossHealthFill.style.backgroundColor = percentage < 0.3 ? '#ff0000' : '#ff4136';
             }
 
-            function moveParticles() {
-                for (let i = 0; i < particles.length; i++) {
-                    const p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.1; // Gravity effect
-                    p.alpha -= 0.05;
+            function drawBoss() { 
+                if (!boss) return;
+                const { x, y, w, h, isHit } = boss;
 
-                    if (p.alpha <= 0) {
-                        particles.splice(i, 1);
-                        i--;
-                    }
+                ctx.save();
+                ctx.translate(x, y);
+
+                // 1. Main Hull (Grey)
+                ctx.fillStyle = isHit ? 'rgba(255, 100, 100, 1)' : '#778899';
+                ctx.strokeStyle = '#333344';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                // Front V-shape
+                ctx.moveTo(0, 0); 
+                ctx.lineTo(w, h / 2);
+                ctx.lineTo(0, h); 
+                ctx.lineTo(w * 0.8, h * 0.8);
+                ctx.lineTo(w * 0.8, h * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // 2. Command Tower (Darker)
+                ctx.fillStyle = '#1a1a2b';
+                ctx.fillRect(w * 0.4, h * 0.2, w * 0.2, h * 0.6);
+                
+                // 3. Engine Glow (Red)
+                const engineGlowColor = '#ff4136';
+                const engineSize = h * 0.3;
+                ctx.fillStyle = engineGlowColor;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = engineGlowColor;
+                
+                ctx.fillRect(w * 0.9, h * 0.2, w * 0.1, engineSize);
+                ctx.fillRect(w * 0.9, h * 0.8 - engineSize, w * 0.1, engineSize);
+                
+                // 4. Damage Overlay (Flicker)
+                if (isHit) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.fillRect(0, 0, w, h);
                 }
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
             }
 
-            function drawParticles() {
-                for (const p of particles) {
-                    ctx.save();
-                    ctx.globalAlpha = p.alpha;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
-                    ctx.restore();
-                }
+            function drawBall(ball) { 
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff33cc';
+                // Enhanced Glow: Multi-layered shadow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ff33cc';
+                ctx.fill();
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#fff'; // Inner white glow for core
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0; 
             }
 
-            function spawnPowerUp(x, y) {
-                if (Math.random() < 0.15) { // 15% chance to drop
-                    const type = Math.floor(Math.random() * 3) + 1;
-                    powerUps.push({
-                        x: x + brickW / 2,
-                        y: y + brickH / 2,
-                        r: 10,
-                        type: type
-                    });
+            function drawPaddle() { 
+                const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                const bladeY = H - paddleH - 10;
+                const handleY = H - 10;
+                
+                // 1. Lightsaber Hilt 
+                ctx.beginPath();
+                ctx.rect(paddleX, handleY, currentPaddleW, 10);
+                ctx.fillStyle = '#4a4a5c'; 
+                ctx.fill();
+
+                ctx.fillStyle = '#111111';
+                const gripSpacing = currentPaddleW / 10;
+                for(let i = 1; i < 9; i += 2) {
+                    ctx.fillRect(paddleX + gripSpacing * i, handleY + 2, gripSpacing, 6);
                 }
-            }
 
-            function movePowerUps() {
-                for (let i = 0; i < powerUps.length; i++) {
-                    const pu = powerUps[i];
-                    pu.y += 2; // Power-ups fall slowly
+                ctx.fillStyle = '#cccccc';
+                ctx.fillRect(paddleX + currentPaddleW * 0.4, handleY, currentPaddleW * 0.2, 1);
+                ctx.closePath();
 
-                    // Paddle collision
-                    const paddleYStart = H - 18;
-                    const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                    if (pu.y + pu.r > paddleYStart && pu.y - pu.r < H && 
-                        pu.x > paddleX && pu.x < paddleX + currentPaddleW) 
-                    {
-                        applyPowerUp(pu.type);
-                        powerUps.splice(i, 1);
-                        i--;
-                    } 
-                    // Out of bounds
-                    else if (pu.y > H) {
-                        powerUps.splice(i, 1);
-                        i--;
-                    }
-                }
-            }
+                // 2. Lightsaber Blade Glow (Enhanced)
+                ctx.shadowBlur = 25; // Bigger blur
+                ctx.shadowColor = lightsaberColor;
+                
+                ctx.beginPath();
+                ctx.rect(paddleX, bladeY, currentPaddleW, paddleH);
+                ctx.fillStyle = lightsaberColor;
+                ctx.fill();
+                
+                // 3. Lightsaber Blade Core 
+                ctx.shadowBlur = 0;
+                const coreW = currentPaddleW * 0.8;
+                const coreX = paddleX + (currentPaddleW - coreW) / 2;
+                ctx.rect(coreX, bladeY + 3, coreW, paddleH - 6);
+                ctx.fillStyle = '#ffffff'; 
+                ctx.fill();
 
-            function drawPowerUps() {
-                for (const pu of powerUps) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(pu.x, pu.y, pu.r, 0, Math.PI * 2);
-                    ctx.fillStyle = PU_COLORS[pu.type];
-                    
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = PU_COLORS[pu.type];
-                    ctx.fill();
-
-                    // Draw inner icon
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#000';
-                    ctx.font = "12px Inter";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    let text = '?';
-                    if (pu.type === PU_TYPE.EXTEND) text = 'W';
-                    else if (pu.type === PU_TYPE.MULTI) text = 'M';
-                    else if (pu.type === PU_TYPE.SHIELD) text = 'S';
-                    ctx.fillText(text, pu.x, pu.y + 1);
-                    
-                    ctx.restore();
-                }
-            }
-
-            function clearPowerUpTimer() {
-                isPaddleExtended = false;
-                shieldActive = false;
-                if (powerUpTimer) clearTimeout(powerUpTimer);
-                // Reset to value from the slider, which defaults to 100 now
-                paddleW = parseInt(paddleSizeSlider.value, 10); 
-                gameContainer.classList.remove('shield-active');
-                forceShield.style.opacity = 0;
-            }
-
-            function applyPowerUp(type) {
-                // Play a bright, ascending sound for power-up
-                Tone.start().then(() => fanfareSynth.triggerAttackRelease(["C6", "G6"], "8n")); 
-
-                if (type === PU_TYPE.EXTEND) {
-                    clearPowerUpTimer(); // Clear existing
-                    isPaddleExtended = true;
-                    // Note: 150 is the max value from the slider, which is now scaled proportionally
-                    paddleW = 150; 
-                    powerUpTimer = setTimeout(clearPowerUpTimer, PU_DURATION);
-                } else if (type === PU_TYPE.MULTI) {
-                    // Spawn two additional balls at the current ball's position with slightly different angles
-                    const currentBall = balls[0] || {x: W/2, y: H-30, dx: 4, dy: -4}; // Fallback in case of multi-ball during no-ball state
-                    const speed = Math.sqrt(currentBall.dx * currentBall.dx + currentBall.dy * currentBall.dy);
-                    balls.push({
-                        x: currentBall.x, 
-                        y: currentBall.y, 
-                        dx: speed * 0.5, 
-                        dy: speed * 0.866 // ~60 degrees
-                    }); 
-                    balls.push({
-                        x: currentBall.x, 
-                        y: currentBall.y, 
-                        dx: speed * -0.5, 
-                        dy: speed * 0.866 // ~120 degrees
-                    });
-                } else if (type === PU_TYPE.SHIELD) {
-                    // Check if shield is already active (to prevent stacking/wasting)
-                    if (shieldActive) return; 
-
-                    shieldActive = true;
-                    forceShield.style.opacity = 1;
-                    gameContainer.classList.add('shield-active');
-                    
-                    // Shield lasts for 10 seconds (visual timer)
-                    powerUpTimer = setTimeout(() => {
-                        shieldActive = false;
-                        forceShield.style.opacity = 0;
-                        gameContainer.classList.remove('shield-active');
-                    }, PU_DURATION);
-                }
+                ctx.closePath();
+                ctx.shadowBlur = 0;
             }
             
-            // --- DRAWING FUNCTIONS (SHIPS) ---
-            
-            // Imperial Ship (Type 1) - Uses Lightsaber Color for Engines/Glow
-            function drawImperialShip(w, h, status, type) {
+            function drawImperialShip(w, h, status, type) { 
                 const isDamaged = status < type;
                 const hullColor = isDamaged ? '#777788' : '#bbbbcc';
                 const detailColor = '#333344'; 
@@ -890,7 +910,6 @@
                 ctx.fillStyle = detailColor;
                 ctx.fillRect(w * 0.75, h / 2 - towerH / 2, towerW, towerH);
                 
-                // Engines (Saber Color Glow)
                 const engineGlow = lightsaberColor; 
                 const engineSize = h * 0.2;
                 ctx.fillStyle = engineGlow; 
@@ -903,15 +922,14 @@
                 if (isDamaged) drawDamageCrack(w, h);
             }
 
-            // TIE Fighter (Type 2) - Uses fixed colors (Magenta/Red for contrast)
-            function drawTieFighter(w, h, status, type) {
+            function drawTieFighter(w, h, status, type) { 
                 const isDamaged = status < type;
                 const wingW = w * 0.3;
                 const wingX1 = w * 0.05;
                 const wingX2 = w * 0.65;
 
                 ctx.fillStyle = isDamaged ? '#080808' : '#111111';
-                ctx.strokeStyle = '#ff33cc'; // Magenta Outline
+                ctx.strokeStyle = '#ff33cc';
                 ctx.lineWidth = 1.5;
                 
                 function drawOctagonalWing(startX) {
@@ -937,7 +955,7 @@
                 ctx.arc(w / 2, h / 2, h * 0.4, 0, Math.PI * 2);
                 ctx.fill();
                 
-                ctx.fillStyle = '#ff33cc'; // Magenta Cockpit Window
+                ctx.fillStyle = '#ff33cc';
                 ctx.beginPath();
                 ctx.arc(w / 2, h / 2, h * 0.2, 0, Math.PI * 2);
                 ctx.fill();
@@ -955,8 +973,7 @@
                 if (isDamaged) drawDamageCrack(w, h);
             }
 
-            // Dreadnought (Type 3) - Uses fixed Green/Red
-            function drawDreadnought(w, h, status, type) {
+            function drawDreadnought(w, h, status, type) { 
                 const isDamaged = status < type;
                 ctx.fillStyle = isDamaged ? '#083308' : '#115511';
                 ctx.strokeStyle = '#00ff00';
@@ -978,10 +995,9 @@
                 if (isDamaged) drawDamageCrack(w, h);
             }
 
-            // Damage Indicator Drawing
-            function drawDamageCrack(w, h) {
+            function drawDamageCrack(w, h) { 
                 ctx.save();
-                ctx.strokeStyle = '#ff0000'; // Red crack
+                ctx.strokeStyle = '#ff0000';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(w * 0.3, h * 0.3);
@@ -991,61 +1007,95 @@
                 ctx.restore();
             }
 
-            // --- DRAWING FUNCTIONS (CORE GAME) ---
+            // --- COLLISION LOGIC ---
 
-            function drawBall(ball) {
-                ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#ff33cc'; // Ball is always magenta/plasma
-                ctx.shadowBlur = 5;
-                ctx.shadowColor = '#ff33cc';
-                ctx.fill();
-                ctx.closePath();
-                ctx.shadowBlur = 0; 
+            function processScoreChange(points) { 
+                score += points;
+                scoreValueEl.textContent = score;
+                // Add a temporary visual "bounce" on score change for feedback
+                scoreValueEl.animate([
+                    { transform: 'scale(1.2)' },
+                    { transform: 'scale(1.0)' }
+                ], {
+                    duration: 100,
+                    easing: 'ease-out'
+                });
             }
 
-            function drawPaddle() {
-                const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                const bladeY = H - paddleH - 10;
-                const handleY = H - 10;
-                
-                // 1. Lightsaber Hilt 
-                ctx.beginPath();
-                ctx.rect(paddleX, handleY, currentPaddleW, 10);
-                ctx.fillStyle = '#4a4a5c'; 
-                ctx.fill();
 
-                ctx.fillStyle = '#111111';
-                const gripSpacing = currentPaddleW / 10;
-                for(let i = 1; i < 9; i += 2) {
-                    ctx.fillRect(paddleX + gripSpacing * i, handleY + 2, gripSpacing, 6);
+            function bossCollisionDetection(ball) { 
+                if (!boss) return false;
+                
+                const { x, y, w, h } = boss;
+
+                if (ball.x > x && ball.x < x + w && ball.y > y && ball.y < y + h) {
+                    ball.dy = -ball.dy; 
+                    boss.health--;
+                    boss.isHit = true; 
+
+                    Tone.start().then(() => explosionSynth.triggerAttackRelease("C2", "8n"));
+                    screenShake(50, 2); 
+                    
+                    processScoreChange(2); 
+                    updateBossHealthBar();
+                    
+                    if (boss.health <= 0) {
+                        spawnParticles(x, y, '#ff4136'); 
+                        spawnParticles(x + w/2, y + h/2, y + h/2);
+                        Tone.start().then(() => explosionSynth.triggerAttackRelease("C1", "4n"));
+                        levelComplete = true; 
+                    }
+                    
+                    setTimeout(() => boss.isHit = false, 50);
+
+                    return true;
                 }
-
-                ctx.fillStyle = '#cccccc';
-                ctx.fillRect(paddleX + currentPaddleW * 0.4, handleY, currentPaddleW * 0.2, 1);
-                ctx.closePath();
-
-                // 2. Lightsaber Blade Glow 
-                ctx.shadowBlur = 20; 
-                ctx.shadowColor = lightsaberColor;
-                
-                ctx.beginPath();
-                ctx.rect(paddleX, bladeY, currentPaddleW, paddleH);
-                ctx.fillStyle = lightsaberColor;
-                ctx.fill();
-                
-                // 3. Lightsaber Blade Core 
-                ctx.shadowBlur = 0;
-                const coreW = currentPaddleW * 0.8;
-                const coreX = paddleX + (currentPaddleW - coreW) / 2;
-                ctx.rect(coreX, bladeY + 3, coreW, paddleH - 6);
-                ctx.fillStyle = '#ffffff'; 
-                ctx.fill();
-
-                ctx.closePath();
-                ctx.shadowBlur = 0;
+                return false;
             }
 
+
+            function collisionDetection(ball) { 
+                if (currentLevel === BOSS_LEVEL) return bossCollisionDetection(ball);
+                if (levelComplete) return false; 
+
+                for (let c = 0; c < brickColumnCount; c++) {
+                    for (let r = 0; r < brickRowCount; r++) {
+                        const brick = bricks[c][r];
+                        if (brick.status > 0) {
+                            if (ball.x > brick.x && ball.x < brick.x + brickW && ball.y > brick.y && ball.y < brick.y + brickH) {
+                                ball.dy = -ball.dy; 
+                                brick.status--; 
+                                
+                                if (brick.type === 3) {
+                                    Tone.start().then(() => explosionSynth.triggerAttackRelease("G3", "16n"));
+                                    screenShake(50, 1);
+                                } else {
+                                    Tone.start().then(() => blasterSynth.triggerAttackRelease("8n"));
+                                }
+
+                                if (brick.status === 0) {
+                                    let points = 0;
+                                    let glowColor;
+                                    if (brick.type === 1) { points = 10; glowColor = lightsaberColor; }
+                                    else if (brick.type === 2) { points = 20; glowColor = PU_COLORS[PU_TYPE.MULTI]; }
+                                    else if (brick.type === 3) { 
+                                        points = 30; 
+                                        glowColor = PU_COLORS[PU_TYPE.SHIELD]; 
+                                        screenShake(100, 3); 
+                                    }
+                                    
+                                    processScoreChange(points);
+                                    spawnParticles(brick.x, brick.y, glowColor);
+                                    spawnPowerUp(brick.x, brick.y);
+                                }
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            
             function drawBricks() {
                 let totalBricks = 0;
                 for (let c = 0; c < brickColumnCount; c++) {
@@ -1053,7 +1103,6 @@
                         const brick = bricks[c][r];
                         if (brick.status > 0) {
                             totalBricks++;
-                            // Use dynamically calculated dimensions
                             let brickX = (c * (brickW + brickPadding)) + brickOffsetLeft;
                             let brickY = (r * (brickH + brickPadding)) + brickOffsetTop;
                             
@@ -1064,9 +1113,9 @@
                             ctx.translate(brickX, brickY);
 
                             let glowColor;
-                            if (brick.type === 3) glowColor = PU_COLORS[PU_TYPE.SHIELD]; // Dreadnought fixed green
-                            else if (brick.type === 2) glowColor = PU_COLORS[PU_TYPE.MULTI]; // TIE Fighter fixed magenta
-                            else glowColor = lightsaberColor; // Imperial Ship uses saber color
+                            if (brick.type === 3) glowColor = PU_COLORS[PU_TYPE.SHIELD];
+                            else if (brick.type === 2) glowColor = PU_COLORS[PU_TYPE.MULTI];
+                            else glowColor = lightsaberColor;
                             
                             ctx.shadowBlur = brick.status * 3; 
                             ctx.shadowColor = glowColor;
@@ -1079,70 +1128,347 @@
                         }
                     }
                 }
-                // Check for level clear after all bricks are drawn
-                if (totalBricks === 0) endGame(true); 
+                
+                if (totalBricks === 0 && currentLevel < BOSS_LEVEL && !levelComplete) {
+                    levelComplete = true; 
+                }
             }
 
-            // --- MOVEMENT & COLLISION ---
-            
-            function collisionDetection(ball) {
-                for (let c = 0; c < brickColumnCount; c++) {
-                    for (let r = 0; r < brickRowCount; r++) {
-                        const brick = bricks[c][r];
-                        if (brick.status > 0) {
-                            // Use current dynamic brick dimensions (brickW/brickH are globals)
-                            if (ball.x > brick.x && ball.x < brick.x + brickW && ball.y > brick.y && ball.y < brick.y + brickH) {
-                                ball.dy = -ball.dy; 
-                                brick.status--; 
-                                Tone.start().then(() => blasterSynth.triggerAttackRelease("8n"));
+            // --- GAME MANAGEMENT ---
 
-                                if (brick.status === 0) {
-                                    if (brick.type === 1) score += 10;
-                                    else if (brick.type === 2) score += 20;
-                                    else if (brick.type === 3) score += 30; 
-                                    
-                                    // Spawn particles and power-ups
-                                    let glowColor;
-                                    if (brick.type === 3) glowColor = PU_COLORS[PU_TYPE.SHIELD];
-                                    else if (brick.type === 2) glowColor = PU_COLORS[PU_TYPE.MULTI];
-                                    else glowColor = lightsaberColor;
-                                    spawnParticles(brick.x, brick.y, glowColor);
-                                    spawnPowerUp(brick.x, brick.y);
-                                } else {
-                                    // Visual feedback for multi-hit ships: impact flash
-                                    ctx.save();
-                                    ctx.globalAlpha = 0.6;
-                                    ctx.fillStyle = lightsaberColor; // Impact flash uses saber color
-                                    ctx.fillRect(brick.x, brick.y, brickW, brickH);
-                                    ctx.globalAlpha = 1.0;
-                                    ctx.restore();
-                                }
-                                return true; // Collision occurred
-                            }
-                        }
+            function nextLevel() {
+                Tone.start().then(() => playFanfare());
+
+                const completedLevel = currentLevel; 
+
+                if (completedLevel === maxLevels) {
+                    currentLevel = BOSS_LEVEL;
+                    messageText.innerHTML = `LEVEL ${maxLevels} CLEARED!<br><span style="color:#ff0000;">IMPERIAL BOSS FIGHT INCOMING!</span>`;
+                    overlayButton.textContent = "ATTACK STAR DESTROYER";
+                } else {
+                    currentLevel++;
+                    messageText.innerHTML = `LEVEL ${completedLevel} COMPLETE!<br>INCOMING: LEVEL ${currentLevel} FLEET...`;
+                    overlayButton.textContent = "CONTINUE";
+                }
+
+                messageText.style.color = lightsaberColor; 
+                highScoreList.style.display = 'none';
+                messageOverlay.classList.add('active');
+                
+                overlayButton.onclick = () => {
+                    initBricks(currentLevel);
+                    resetBallAndPaddle();
+                    document.getElementById('levelValue').textContent = currentLevel === BOSS_LEVEL ? 'BOSS' : currentLevel;
+                    messageOverlay.classList.remove('active');
+                    gameRunning = true;
+                    levelComplete = false; 
+                };
+            }
+
+            function startGame() {
+                Tone.start().then(() => {
+                    setupAudio(); 
+                    startBGHum();
+                });
+
+                if (gameRunning) return;
+                
+                clearPowerUpTimer();
+
+                score = 0;
+                lives = 3;
+                currentLevel = 1; 
+                levelComplete = false; 
+                powerUps = [];
+                particles = [];
+                balls = [];
+                boss = null;
+                
+                document.getElementById('scoreValue').textContent = score;
+                document.getElementById('livesValue').textContent = lives;
+                document.getElementById('levelValue').textContent = currentLevel;
+                
+                initBricks(currentLevel);
+                resetBallAndPaddle();
+                
+                messageOverlay.classList.remove('active');
+                startButton.style.display = 'none';
+                gameRunning = true;
+            }
+
+            async function endGame(win = false) {
+                gameRunning = false;
+                stopBGHum();
+                clearPowerUpTimer();
+                
+                startButton.textContent = 'RESTART THE FORCE';
+                startButton.style.display = 'block';
+
+                if (win) {
+                    if (currentLevel < BOSS_LEVEL) {
+                        nextLevel(); 
+                        return; 
+                    } else {
+                        messageText.innerHTML = `GALACTIC VICTORY!<br>THE EMPIRE IS DEFEATED!<br>FINAL SCORE: ${score}`;
+                        messageText.style.color = '#00ff00';
+                        overlayButton.textContent = "PLAY AGAIN";
+                    }
+                } else {
+                    messageText.innerHTML = 'GAME OVER. THE DARK SIDE PREVAILS!<br>FINAL SCORE: ' + score;
+                    messageText.style.color = lightsaberColor;
+                    overlayButton.textContent = "TRY AGAIN";
+                    await saveHighScore();
+                }
+                
+                await loadHighScores();
+                messageOverlay.classList.add('active');
+                overlayButton.onclick = startGame; 
+            }
+            
+            // --- MAIN GAME LOOP ---
+            function draw() { 
+                
+                if (W === undefined) updateCanvasDimensions(); 
+                
+                drawStars();
+                
+                if (boss) drawBoss();
+                if (bricks.length > 0) drawBricks();
+
+                if (!gameRunning) {
+                    drawPowerUps(); 
+                    drawParticles(); 
+                    return;
+                }
+                
+                drawPowerUps();
+                drawParticles(); 
+                balls.forEach(drawBall);
+                drawPaddle(); 
+
+                document.getElementById('scoreValue').textContent = score;
+                document.getElementById('livesValue').textContent = lives;
+            }
+
+            function loop() { 
+                // Apply canvas shake transformation
+                if (shakeDuration > 0) {
+                    const elapsed = Date.now() - (performance.now() - shakeDuration);
+                    if (elapsed < shakeDuration) {
+                        // Use CSS animation defined in the style block for modern, smooth shaking
+                    } else {
+                        shakeDuration = 0;
+                        gameContainer.classList.remove('shake');
                     }
                 }
-                return false;
+
+                // Clamping paddleX is run every frame for stability
+                clampPaddleX(); 
+
+                if (gameRunning && levelComplete) {
+                    endGame(true);
+                }
+                
+                draw(); 
+                
+                if (gameRunning || particles.length > 0) {
+                    lastPaddleX = paddleX;
+                    moveBalls();
+                    movePowerUps();
+                    moveParticles();
+                }
+
+                requestAnimationFrame(loop);
+            }
+            
+            // --- UTILITIES (Particles, PowerUps, etc.) ---
+
+            function spawnParticles(px, py, color) { 
+                for (let i = 0; i < 20; i++) { 
+                    particles.push({
+                        x: px + brickW / 2,
+                        y: py + brickH / 2,
+                        vx: (Math.random() - 0.5) * 8, 
+                        vy: (Math.random() - 0.5) * 8,
+                        r: Math.random() * 2 + 1,
+                        alpha: 1,
+                        color: color
+                    });
+                }
             }
 
-            function moveBalls() {
+            function moveParticles() { 
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1; 
+                    p.alpha -= 0.05;
+
+                    if (p.alpha <= 0) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+
+            function drawParticles() { 
+                for (const p of particles) {
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            function spawnPowerUp(x, y) { 
+                if (Math.random() < 0.15) { 
+                    const type = Math.floor(Math.random() * 3) + 1;
+                    powerUps.push({
+                        x: x + brickW / 2,
+                        y: y + brickH / 2,
+                        r: 10,
+                        type: type
+                    });
+                }
+            }
+            
+            function movePowerUps() { 
+                for (let i = 0; i < powerUps.length; i++) {
+                    const pu = powerUps[i];
+                    pu.y += 2;
+                    const paddleYStart = H - 18;
+                    const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                    if (pu.y + pu.r > paddleYStart && pu.y - pu.r < H && 
+                        pu.x > paddleX && pu.x < paddleX + currentPaddleW) 
+                    {
+                        applyPowerUp(pu.type);
+                        powerUps.splice(i, 1);
+                        i--;
+                    } 
+                    else if (pu.y > H) {
+                        powerUps.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+            
+            function drawPowerUps() { 
+                for (const pu of powerUps) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(pu.x, pu.y, pu.r, 0, Math.PI * 2);
+                    ctx.fillStyle = PU_COLORS[pu.type];
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = PU_COLORS[pu.type];
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#000';
+                    ctx.font = "12px Inter";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    let text = '?';
+                    if (pu.type === PU_TYPE.EXTEND) text = 'W';
+                    else if (pu.type === PU_TYPE.MULTI) text = 'M';
+                    else if (pu.type === PU_TYPE.SHIELD) text = 'S';
+                    ctx.fillText(text, pu.x, pu.y + 1);
+                    ctx.restore();
+                }
+            }
+            
+            function clearPowerUpTimer() { 
+                isPaddleExtended = false;
+                // Note: We don't clear shieldActive here as the Shield Power-Up has its own separate timer logic.
+                if (powerUpTimer) clearTimeout(powerUpTimer);
+                paddleW = parseInt(paddleSizeSlider.value, 10); 
+            }
+
+            function applyPowerUp(type) { 
+                Tone.start().then(() => fanfareSynth.triggerAttackRelease(["C6", "G6"], "8n")); 
+
+                if (type === PU_TYPE.EXTEND) {
+                    clearPowerUpTimer();
+                    isPaddleExtended = true;
+                    paddleW = 150; 
+                    powerUpTimer = setTimeout(clearPowerUpTimer, PU_DURATION);
+                } else if (type === PU_TYPE.MULTI) {
+                    const currentBall = balls[0] || {x: W/2, y: H-30, dx: 4, dy: -4}; 
+                    const speed = Math.sqrt(currentBall.dx * currentBall.dx + currentBall.dy * currentBall.dy);
+                    balls.push({
+                        x: currentBall.x, y: currentBall.y, dx: speed * 0.5, dy: speed * 0.866
+                    }); 
+                    balls.push({
+                        x: currentBall.x, y: currentBall.y, dx: speed * -0.5, dy: speed * 0.866
+                    });
+                } else if (type === PU_TYPE.SHIELD) {
+                    if (shieldActive) return; 
+                    shieldActive = true;
+                    forceShield.style.opacity = 1;
+                    gameContainer.classList.add('shield-active');
+                    powerUpTimer = setTimeout(() => {
+                        shieldActive = false;
+                        forceShield.style.opacity = 0;
+                        gameContainer.classList.remove('shield-active');
+                    }, PU_DURATION);
+                }
+            }
+            
+            function initStars() { 
+                stars = [];
+                const numStars = (W * H) / 1000; 
+                for (let i = 0; i < numStars; i++) {
+                    stars.push({
+                        x: Math.random() * W,
+                        y: Math.random() * H,
+                        r: Math.random() * 1.5 + 0.5,
+                        color: Math.random() > 0.9 ? lightsaberColor : '#FFFFFF' 
+                    });
+                }
+            }
+            
+            function drawStars() { 
+                ctx.fillStyle = '#000000'; 
+                ctx.fillRect(0, 0, W, H);
+                
+                starScrollY += STAR_SPEED;
+                
+                ctx.fillStyle = 'rgba(0, 0, 50, 0.1)'; 
+                ctx.fillRect(0, 0, W, H);
+
+                for (let i = 0; i < stars.length; i++) {
+                    const star = stars[i];
+                    star.y += STAR_SPEED;
+                    if (star.y > H) {
+                        star.y = 0; 
+                        star.x = Math.random() * W;
+                        star.color = Math.random() > 0.9 ? lightsaberColor : '#FFFFFF';
+                    }
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+                    ctx.fillStyle = star.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+
+            function moveBalls() { 
                 for (let i = 0; i < balls.length; i++) {
                     const ball = balls[i];
                     
                     ball.x += ball.dx;
                     ball.y += ball.dy;
 
-                    // Wall collision (left/right)
                     if (ball.x + ball.dx > W - ballRadius || ball.x + ball.dx < ballRadius) {
                         ball.dx = -ball.dx;
                     }
                     
-                    // Wall collision (top)
                     if (ball.y + ball.dy < ballRadius) {
                         ball.dy = -ball.dy;
                     } 
                     
-                    // Bottom collision
                     else if (ball.y + ball.dy > H - ballRadius) {
                         const currentPaddleW = isPaddleExtended ? 150 : paddleW;
                         const paddleYStart = H - 18; 
@@ -1151,7 +1477,6 @@
                             ball.dy = -ball.dy; 
                             Tone.start().then(() => saberSynth.triggerAttackRelease("C4", "8n"));
 
-                            // Advanced Deflection Angle: Use paddle velocity
                             const paddleVelocity = paddleX - lastPaddleX;
                             const maxPaddleSpeedEffect = 2; 
                             
@@ -1170,21 +1495,24 @@
                             ball.dy = -Math.abs(Math.sqrt(currentSpeed * currentSpeed - ball.dx * ball.dx));
                             
                         } else {
-                            // Missed the paddle - check shield
+                            // --- FIX: Logic for ball loss and life deduction ---
                             if (shieldActive) {
-                                Tone.start().then(() => fanfareSynth.triggerAttackRelease("E3", "8n")); // Shield block sound
-                                shieldActive = false; // Shield used up
+                                Tone.start().then(() => fanfareSynth.triggerAttackRelease("E3", "8n")); 
+                                shieldActive = false;
                                 forceShield.style.opacity = 0;
                                 gameContainer.classList.remove('shield-active');
-                                ball.dy = -ball.dy; // Bounce back
+                                ball.dy = -ball.dy; // Shield bounce, no life lost, ball not removed
                             } else {
-                                // No shield, remove the ball
+                                // Ball is lost. Remove it.
                                 balls.splice(i, 1);
                                 i--; 
 
                                 if (balls.length === 0) {
-                                    // Only lose a life if the last ball is lost
+                                    // Only lose a life and reset if this was the LAST ball
                                     lives--;
+                                    document.getElementById('livesValue').textContent = lives; // Update display
+                                    screenShake(150, 4);
+
                                     if (lives === 0) {
                                         endGame(false);
                                     } else {
@@ -1192,6 +1520,7 @@
                                     }
                                 }
                             }
+                            // --- END FIX ---
                         }
                     }
                     
@@ -1200,179 +1529,45 @@
             }
 
 
-            // --- GAME MANAGEMENT ---
-
-            async function loadHighScores() {
-                highScoreList.style.display = 'block';
-                highScoreList.innerHTML = '<li>HIGH SCORES (Loading...)</li>';
+            function init() {
+                initFirebase();
+                updateCanvasDimensions();
                 
-                const { collection, query, orderBy, limit, getDocs } = window.firebase;
-
-                if (!db) {
-                    highScoreList.innerHTML = '<li>HIGH SCORES (DB not ready)</li>';
-                    return;
-                }
-
-                try {
-                    const q = query(collection(db, HIGHSCORE_COLLECTION), orderBy("score", "desc"), limit(5));
-                    const querySnapshot = await getDocs(q);
-                    
-                    let html = '<li>**HIGH SCORES**</li>';
-                    let rank = 1;
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const id = data.userId.substring(0, 8); // Truncate ID for display
-                        const rankClass = rank === 1 ? 'style="color:#ffea00; font-weight:bold;"' : '';
-                        html += `<li ${rankClass}>#${rank}. ${data.score} <span>(Player: ${id}...)</span></li>`;
-                        rank++;
+                // Color Swatch Logic
+                if (colorSwatchesContainer) {
+                    colorSwatchesContainer.addEventListener('click', (e) => {
+                        const target = e.target.closest('.color-swatch');
+                        if (target) {
+                            updateSaberColor(target.dataset.color);
+                        }
                     });
-                    if (querySnapshot.empty) {
-                        html += '<li>No scores yet! Be the first.</li>';
-                    }
-                    highScoreList.innerHTML = html;
-                } catch (e) {
-                    console.error("Error loading high scores:", e);
-                    highScoreList.innerHTML = '<li>High Scores failed to load.</li>';
+                    updateSaberColor(currentSaberColor);
                 }
-            }
-            
-            async function saveHighScore() {
-                 if (!db || score === 0) return;
-                 const { addDoc, collection } = window.firebase;
-                 
-                 try {
-                     await addDoc(collection(db, HIGHSCORE_COLLECTION), {
-                         userId: userId,
-                         score: score,
-                         timestamp: new Date()
-                     });
-                     console.log("High score saved successfully.");
-                 } catch (e) {
-                     console.error("Error saving high score:", e);
-                 }
-            }
 
-            function nextLevel() {
-                Tone.start().then(() => playFanfare()); // Play level complete sound
-                currentLevel++;
+                if (paddleSizeSlider) {
+                    paddleW = parseInt(paddleSizeSlider.value, 10);
+                    paddleSizeSlider.addEventListener('input', (e) => {
+                        if (!isPaddleExtended) {
+                             paddleW = parseInt(e.target.value, 10);
+                        }
+                    });
+                }
+
+                window.addEventListener('resize', updateCanvasDimensions); 
+                document.addEventListener('mousemove', mouseMoveHandler, false);
+                canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
                 
-                messageText.innerHTML = `LEVEL ${currentLevel - 1} COMPLETE!<br>INCOMING: LEVEL ${currentLevel} FLEET...`;
-                messageText.style.color = lightsaberColor; 
-                overlayButton.textContent = "CONTINUE";
-                highScoreList.style.display = 'none'; // Hide scores during transition
+                messageText.innerHTML = "WELCOME TO SABER BREAKER!<br>DESTROY THE IMPERIAL FLEET WITH YOUR LIGHTSABER.";
+                overlayButton.textContent = "BEGIN MISSION";
                 messageOverlay.classList.add('active');
                 
-                overlayButton.onclick = () => {
-                    initBricks(currentLevel);
-                    resetBallAndPaddle();
-                    document.getElementById('levelValue').textContent = currentLevel;
-                    messageOverlay.classList.remove('active');
-                    gameRunning = true;
-                };
-            }
-
-            function startGame() {
-                Tone.start().then(() => {
-                    setupAudio(); 
-                    startBGHum();
-                });
-
-                if (gameRunning) return;
-                
-                clearPowerUpTimer(); // Reset any residual power-up states
-
-                score = 0;
-                lives = 3;
-                currentLevel = 1;
-                powerUps = [];
-                particles = [];
-                balls = []; // Reset balls array
-                
-                document.getElementById('scoreValue').textContent = score;
-                document.getElementById('livesValue').textContent = lives;
-                document.getElementById('levelValue').textContent = currentLevel;
-                
-                initBricks(currentLevel);
-                resetBallAndPaddle();
-                
-                messageOverlay.classList.remove('active');
-                startButton.style.display = 'none'; // Hide the start button under the canvas
-                gameRunning = true;
-            }
-
-            async function endGame(win = false) {
-                gameRunning = false;
-                stopBGHum();
-                clearPowerUpTimer();
-                
-                startButton.textContent = 'RESTART THE FORCE';
-                startButton.style.display = 'block';
-
-                if (win) {
-                    if (currentLevel < maxLevels) {
-                        nextLevel();
-                        return;
-                    } else {
-                        messageText.innerHTML = `GALACTIC VICTORY!<br>FINAL SCORE: ${score}`;
-                        messageText.style.color = '#00ff00';
-                        overlayButton.textContent = "PLAY AGAIN";
-                    }
-                } else {
-                    messageText.innerHTML = 'GAME OVER. THE DARK SIDE PREVAILS!<br>FINAL SCORE: ' + score;
-                    messageText.style.color = lightsaberColor; // Use saber color for game over text
-                    overlayButton.textContent = "TRY AGAIN";
-                    await saveHighScore();
-                }
-                
-                await loadHighScores();
-                messageOverlay.classList.add('active');
+                startButton.onclick = startGame;
                 overlayButton.onclick = startGame; 
+
+                loop(); 
             }
 
-            // --- MAIN GAME LOOP ---
-
-            function draw() {
-                
-                // CRITICAL: Call this every frame to ensure the brick layout adapts instantly 
-                // if the screen size changes while the game is running (e.g., orientation change)
-                if (W === undefined) updateCanvasDimensions(); 
-                
-                drawStars();
-                
-                if (!gameRunning) return;
-
-                drawBricks();
-                drawPowerUps();
-                drawParticles(); 
-                balls.forEach(drawBall);
-                drawPaddle(); 
-
-                // Update info panel
-                document.getElementById('scoreValue').textContent = score;
-                document.getElementById('livesValue').textContent = lives;
-                document.getElementById('levelValue').textContent = currentLevel;
-            }
-
-            function loop() {
-                
-                draw(); // Draw starfield and game entities regardless of gameRunning state
-                
-                // Only run movement/logic if the game is active or particles are decaying
-                if (gameRunning || particles.length > 0) {
-                    
-                    // Store paddle position before update for velocity calculation
-                    lastPaddleX = paddleX;
-
-                    moveBalls();
-                    movePowerUps();
-                    moveParticles();
-                }
-
-                requestAnimationFrame(loop);
-            }
-
-            // --- INPUT HANDLING ---
-
+            // --- INPUT HANDLERS ---
             function mouseMoveHandler(e) {
                 if (!gameRunning) return;
                 const relativeX = e.clientX - canvas.getBoundingClientRect().left;
@@ -1381,12 +1576,10 @@
 
                 if (relativeX > 0 && relativeX < W) {
                     paddleX = relativeX - currentPaddleW / 2;
-                    paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
                 }
             }
 
             function touchMoveHandler(e) {
-                // IMPORTANT: Prevent default browser scrolling/zooming while touching the canvas
                 if (!gameRunning || e.touches.length === 0) return;
                 e.preventDefault(); 
                 
@@ -1397,65 +1590,13 @@
 
                 if (relativeX > 0 && relativeX < W) {
                     paddleX = relativeX - currentPaddleW / 2;
-                    paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
                 }
             }
+            // --- END INPUT HANDLERS ---
             
-            // --- INITIALIZATION ---
-            
-            function init() {
-                // 1. Firebase/Auth Setup
-                initFirebase();
-                
-                // 2. Initial Canvas Sizing
-                updateCanvasDimensions();
-                
-                // 3. Color Selector listener
-                if (saberColorSelect) {
-                    saberColorSelect.addEventListener('change', (e) => {
-                        updateSaberColor(e.target.value);
-                    });
-                    // Set initial color based on default select value and update all dynamic styles
-                    updateSaberColor(saberColorSelect.value);
-                }
-
-                // 4. Slider listener
-                if (paddleSizeSlider) {
-                    // Initialize paddleW from the (now larger) default slider value
-                    paddleW = parseInt(paddleSizeSlider.value, 10);
-                    paddleSizeSlider.addEventListener('input', (e) => {
-                        // Only change base paddleW if power-up is not active
-                        if (!isPaddleExtended) {
-                             paddleW = parseInt(e.target.value, 10);
-                             if (paddleX !== undefined) {
-                                 const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                                 paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
-                             }
-                        }
-                    });
-                }
-
-                // 5. Event listeners
-                // Call updateCanvasDimensions on resize to ensure responsiveness (e.g., orientation change)
-                window.addEventListener('resize', updateCanvasDimensions); 
-                document.addEventListener('mousemove', mouseMoveHandler, false);
-                // Touch listener attached directly to the canvas to ensure we capture movement over the game area
-                canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
-                
-                // 6. Set initial screen and button handlers
-                messageText.innerHTML = "WELCOME TO SABER BREAKER!<br>DESTROY THE IMPERIAL FLEET WITH YOUR LIGHTSABER.";
-                overlayButton.textContent = "BEGIN MISSION";
-                messageOverlay.classList.add('active');
-                
-                startButton.onclick = startGame;
-                overlayButton.onclick = startGame; 
-
-                // 7. Start the persistent animation loop
-                loop(); 
-            }
-
             window.onload = init;
         })();
     </script>
 </body>
 </html>
+
