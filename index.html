@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saber Breaker: A Star Wars Game</title>
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.71/build/Tone.js"></script>
-    <!-- Firebase Imports -->
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, getFirestore, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global Firebase variables will be attached to the window object for access in the main script
@@ -328,7 +328,7 @@
             <div class="level-label">LEVEL: <span id="levelValue">1</span></div>
         </div>
 
-        <!-- Boss Health Bar -->
+        
         <div id="bossHealthBar">
             <div id="bossHealthFill"></div>
         </div>
@@ -338,7 +338,7 @@
             <input type="range" id="paddleSizeSlider" min="50" max="150" value="100">
         </div>
         
-        <!-- Color Swatch Controls -->
+        
         <div class="color-controls paddle-controls" style="margin-top: -10px;">
             <label>SABER COLOR:</label>
             <div id="colorSwatches" style="display: flex; gap: 15px;">
@@ -489,13 +489,28 @@
             let currentSaberColor = 'cyan';
             let lightsaberColor = COLOR_MAP[currentSaberColor].blade;
 
+            // --- IMPERIAL MARCH SEQUENCE (UPDATED WITH DURATION FOR RHYTHM) ---
+            const imperialMarchSequence = [
+                { note: 'G4', duration: 0.25 },
+                { note: 'G4', duration: 0.25 },
+                { note: 'G4', duration: 0.25 },
+                { note: 'Eb4', duration: 0.15 },
+                { note: 'Bb4', duration: 0.10 },
+                { note: 'G4', duration: 0.25 },
+                { note: 'Eb4', duration: 0.25 },
+                { note: 'Bb4', duration: 0.25 },
+                { note: 'G4', duration: 0.5 },
+            ];
+            let imperialMarchIndex = 0;
+
             // --- GAME STATE VARIABLES ---
             let gameRunning = false;
             let levelComplete = false; 
             let score = 0;
             let lives = 3;
             let currentLevel = 1;
-            let paddleW = 100;
+            let paddleW = 100; // This is the blade width
+            const hiltW = 40; // Fixed: Width of the hilt for game physics/collision
             let paddleX; 
             let lastPaddleX = 0;
 
@@ -544,7 +559,7 @@
 
             // --- COLOR CONTROL FUNCTION ---
             function updateSaberColor(newColorKey) {
-                // *** FIX: Save the current paddle position before DOM manipulation ***
+                // *** Save the current paddle position before DOM manipulation ***
                 let originalPaddleX = paddleX; 
                 
                 currentSaberColor = newColorKey;
@@ -576,19 +591,28 @@
                     }
                 });
 
-                // *** FIX: Restore the paddle position immediately after DOM manipulation ***
+                // *** Restore the paddle position immediately after DOM manipulation ***
                 if (gameRunning && originalPaddleX !== undefined) {
                     paddleX = originalPaddleX;
                 }
             }
 
-            // --- TONE.JS SOUND SETUP ---
+            // --- TONE.JS SOUND SETUP (UPDATED blasterSynth) ---
             function setupAudio() {
                 if (isAudioReady) return;
                 
                 Tone.start().then(() => {
-                    // 1. Blaster Hit Synth
-                    blasterSynth = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05, }}).toDestination();
+                    // 1. Blaster Hit Synth: Changed to Sawtooth and envelope adjusted for brassy tone/rhythm
+                    blasterSynth = new Tone.Synth({ 
+                        oscillator: { type: 'sawtooth' }, // Changed to sawtooth for a brassier sound
+                        envelope: { 
+                            attack: 0.01, 
+                            decay: 0.3, // Longer decay to hold the note slightly longer
+                            sustain: 0, 
+                            release: 0.1 
+                        },
+                        volume: -5 // Increase volume slightly
+                    }).toDestination();
 
                     // 2. Lightsaber Deflection Synth
                     saberSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.01, release: 0.3, }, volume: -10 }).toDestination();
@@ -629,7 +653,7 @@
                 if (!isAudioReady) return;
                 bgSynth.triggerAttackRelease(["C2", "G2"], "4n");
                 Tone.Transport.scheduleRepeat(() => {
-                    bgSynth.triggerAttackRelease(["C2", "G2"], "4n");
+                    bgSynth.triggerAttackRelease(["C2", "G2"], "2n");
                 }, "2n");
                 Tone.Transport.start();
             }
@@ -651,8 +675,8 @@
             /** NEW HELPER FUNCTION: Clamps paddleX within valid boundaries */
             function clampPaddleX() {
                  if (W === undefined || paddleX === undefined) return;
-                 const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                 paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
+                 const currentTotalPaddleW = (isPaddleExtended ? 150 : paddleW) + hiltW; // Total width is blade + hilt
+                 paddleX = Math.max(0, Math.min(paddleX, W - currentTotalPaddleW));
             }
 
             function updateCanvasDimensions() {
@@ -700,7 +724,7 @@
 
                 if (paddleX === undefined) {
                     // Initialize paddleX ONLY if it hasn't been set yet (e.g., first load)
-                    paddleX = (W - paddleW) / 2;
+                    paddleX = (W - (paddleW + hiltW)) / 2; // Adjust for total paddle width
                 }
                 
                 if (balls.length === 0) {
@@ -711,6 +735,7 @@
             function initBricks(level) {
                 boss = null;
                 bossHealthBar.style.display = 'none';
+                imperialMarchIndex = 0; // Reset music index on new level
 
                 if (level === BOSS_LEVEL) {
                     const bossW = W * 0.9;
@@ -769,7 +794,7 @@
                     dy: initialDy
                 });
 
-                paddleX = (W - paddleW) / 2;
+                paddleX = (W - (paddleW + hiltW)) / 2; // Adjust for total paddle width
                 lastPaddleX = paddleX;
             }
 
@@ -844,41 +869,126 @@
                 ctx.shadowBlur = 0; 
             }
 
+            /**
+             * Draws the lightsaber paddle with a custom hilt style based on the selected color.
+             */
             function drawPaddle() { 
-                const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                const bladeY = H - paddleH - 10;
-                const handleY = H - 10;
+                const currentBladeW = isPaddleExtended ? 150 : paddleW;
+                // Note: hiltW is always 40 for collision/positioning consistency
+                const totalSaberW = currentBladeW + hiltW; 
+                const saberY = H - paddleH - 10;
                 
-                // 1. Lightsaber Hilt 
-                ctx.beginPath();
-                ctx.rect(paddleX, handleY, currentPaddleW, 10);
-                ctx.fillStyle = '#4a4a5c'; 
-                ctx.fill();
+                const hiltX = paddleX;
+                const hiltY = saberY;
+                const hiltHeight = paddleH + 5; 
+                const bladeX = paddleX + hiltW;
 
-                ctx.fillStyle = '#111111';
-                const gripSpacing = currentPaddleW / 10;
-                for(let i = 1; i < 9; i += 2) {
-                    ctx.fillRect(paddleX + gripSpacing * i, handleY + 2, gripSpacing, 6);
+                // --- 1. Draw Hilt based on Color ---
+                ctx.save();
+
+                switch (currentSaberColor) {
+                    case 'red': // Darth Vader Style: Dark, angular, prominent emitter
+                        // Main Body: Black/Dark Grey
+                        ctx.fillStyle = '#222222';
+                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+
+                        // Metallic Bands/Buttons (Grip)
+                        ctx.fillStyle = '#555555';
+                        ctx.fillRect(hiltX + 5, hiltY + 2, 5, hiltHeight - 4);
+                        ctx.fillRect(hiltX + 15, hiltY + 2, 15, hiltHeight - 4);
+
+                        // Emitter Shroud (Angular Red)
+                        ctx.fillStyle = '#cc0000';
+                        ctx.beginPath();
+                        ctx.moveTo(hiltX + hiltW, hiltY);
+                        ctx.lineTo(hiltX + hiltW - 10, hiltY);
+                        ctx.lineTo(hiltX + hiltW - 5, hiltY + hiltHeight / 2);
+                        ctx.lineTo(hiltX + hiltW - 10, hiltY + hiltHeight);
+                        ctx.lineTo(hiltX + hiltW, hiltY + hiltHeight);
+                        ctx.fill();
+
+                        // Emitter Ring (Silver)
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillRect(hiltX + hiltW - 2, hiltY, 2, hiltHeight);
+                        break;
+
+                    case 'green': // Yoda Style: Short, simple, aged/brass look (Visually shorter, but still occupies hiltW space)
+                        const yodaHiltW = 30; // Visual length of hilt
+                        const yodaHiltX = hiltX + (hiltW - yodaHiltW); // Draw pushed to the left to leave space for emitter
+                        
+                        // Main Body: Brass/Copper
+                        ctx.fillStyle = '#B87333'; 
+                        ctx.fillRect(yodaHiltX, hiltY, yodaHiltW, hiltHeight);
+                        
+                        // Leather Grip
+                        ctx.fillStyle = '#3a1f0f';
+                        ctx.fillRect(yodaHiltX + 3, hiltY + 2, yodaHiltW - 6, hiltHeight - 4);
+
+                        // Emitter (Green Accent)
+                        ctx.fillStyle = '#00ff00';
+                        ctx.fillRect(hiltX + hiltW - 5, hiltY, 5, hiltHeight); 
+                        
+                        // Emitter Ring (Silver) - on the blade side of the full hiltW space
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillRect(hiltX + hiltW - 2, hiltY, 2, hiltHeight);
+                        break; 
+
+                    case 'purple': // Mace Windu Style: Gold/Silver accents, elegant
+                        // Main Body: Dark metal
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+                        
+                        // Gold Accents (Bands)
+                        ctx.fillStyle = '#FFD700'; 
+                        ctx.fillRect(hiltX + 5, hiltY, 5, hiltHeight); 
+                        ctx.fillRect(hiltX + 15, hiltY, 5, hiltHeight);
+
+                        // Emitter (Silver)
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillRect(hiltX + hiltW * 0.8, hiltY, 2, hiltHeight); 
+                        
+                        // Activation Switch (Purple accent)
+                        ctx.fillStyle = '#cc00ff';
+                        ctx.beginPath();
+                        ctx.arc(hiltX + hiltW * 0.6, hiltY + hiltHeight / 2, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'cyan': // Default/Classic Jedi Style (Obi-Wan/Luke)
+                    default:
+                        // Main Body: Metallic silver
+                        ctx.fillStyle = '#777777'; 
+                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+                        
+                        // Grip Details (Black)
+                        ctx.fillStyle = '#111111'; 
+                        const gripSpacing = hiltW / 4;
+                        ctx.fillRect(hiltX + gripSpacing * 0.5, hiltY + 2, gripSpacing * 0.5, hiltHeight - 4);
+                        ctx.fillRect(hiltX + gripSpacing * 2.5, hiltY + 2, gripSpacing * 0.5, hiltHeight - 4);
+
+                        // Emitter Ring (Chrome)
+                        ctx.fillStyle = '#cccccc'; 
+                        ctx.fillRect(hiltX + hiltW * 0.8, hiltY, 2, hiltHeight);
+                        break;
                 }
+                
+                ctx.restore(); 
 
-                ctx.fillStyle = '#cccccc';
-                ctx.fillRect(paddleX + currentPaddleW * 0.4, handleY, currentPaddleW * 0.2, 1);
-                ctx.closePath();
-
-                // 2. Lightsaber Blade Glow (Enhanced)
+                // --- 2. Lightsaber Blade Glow (Enhanced) ---
+                
                 ctx.shadowBlur = 25; // Bigger blur
                 ctx.shadowColor = lightsaberColor;
                 
                 ctx.beginPath();
-                ctx.rect(paddleX, bladeY, currentPaddleW, paddleH);
+                ctx.rect(bladeX, saberY, currentBladeW, paddleH);
                 ctx.fillStyle = lightsaberColor;
                 ctx.fill();
                 
-                // 3. Lightsaber Blade Core 
+                // --- 3. Lightsaber Blade Core ---
                 ctx.shadowBlur = 0;
-                const coreW = currentPaddleW * 0.8;
-                const coreX = paddleX + (currentPaddleW - coreW) / 2;
-                ctx.rect(coreX, bladeY + 3, coreW, paddleH - 6);
+                const coreW = currentBladeW * 0.8;
+                const coreX = bladeX + (currentBladeW - coreW) / 2;
+                ctx.rect(coreX, saberY + 3, coreW, paddleH - 6);
                 ctx.fillStyle = '#ffffff'; 
                 ctx.fill();
 
@@ -1067,10 +1177,14 @@
                                 brick.status--; 
                                 
                                 if (brick.type === 3) {
+                                    // Heavy block hit (Explosion sound)
                                     Tone.start().then(() => explosionSynth.triggerAttackRelease("G3", "16n"));
                                     screenShake(50, 1);
                                 } else {
-                                    Tone.start().then(() => blasterSynth.triggerAttackRelease("8n"));
+                                    // Play the next note in the Imperial March sequence (UPDATED TO USE DURATION)
+                                    const { note, duration } = imperialMarchSequence[imperialMarchIndex];
+                                    Tone.start().then(() => blasterSynth.triggerAttackRelease(note, duration));
+                                    imperialMarchIndex = (imperialMarchIndex + 1) % imperialMarchSequence.length;
                                 }
 
                                 if (brick.status === 0) {
@@ -1341,9 +1455,12 @@
                     const pu = powerUps[i];
                     pu.y += 2;
                     const paddleYStart = H - 18;
-                    const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                    const currentBladeW = isPaddleExtended ? 150 : paddleW;
+                    const totalSaberW = currentBladeW + hiltW;
+
+                    // Collision detection with the entire saber (hilt + blade)
                     if (pu.y + pu.r > paddleYStart && pu.y - pu.r < H && 
-                        pu.x > paddleX && pu.x < paddleX + currentPaddleW) 
+                        pu.x > paddleX && pu.x < paddleX + totalSaberW) 
                     {
                         applyPowerUp(pu.type);
                         powerUps.splice(i, 1);
@@ -1381,7 +1498,6 @@
             
             function clearPowerUpTimer() { 
                 isPaddleExtended = false;
-                // Note: We don't clear shieldActive here as the Shield Power-Up has its own separate timer logic.
                 if (powerUpTimer) clearTimeout(powerUpTimer);
                 paddleW = parseInt(paddleSizeSlider.value, 10); 
             }
@@ -1392,7 +1508,8 @@
                 if (type === PU_TYPE.EXTEND) {
                     clearPowerUpTimer();
                     isPaddleExtended = true;
-                    paddleW = 150; 
+                    // paddleW max is 150, but hiltW is fixed. So total width increases by paddleW increase.
+                    // The slider still controls paddleW for the base state.
                     powerUpTimer = setTimeout(clearPowerUpTimer, PU_DURATION);
                 } else if (type === PU_TYPE.MULTI) {
                     const currentBall = balls[0] || {x: W/2, y: H-30, dx: 4, dy: -4}; 
@@ -1470,23 +1587,27 @@
                     } 
                     
                     else if (ball.y + ball.dy > H - ballRadius) {
-                        const currentPaddleW = isPaddleExtended ? 150 : paddleW;
-                        const paddleYStart = H - 18; 
+                        const currentBladeW = isPaddleExtended ? 150 : paddleW;
+                        const totalSaberW = currentBladeW + hiltW;
+                        const saberY = H - paddleH - 10; 
 
-                        if (ball.x > paddleX && ball.x < paddleX + currentPaddleW && ball.y > paddleYStart) {
+                        // Check collision with the entire saber (hilt + blade)
+                        if (ball.x > paddleX && ball.x < paddleX + totalSaberW && ball.y > saberY) {
                             ball.dy = -ball.dy; 
                             Tone.start().then(() => saberSynth.triggerAttackRelease("C4", "8n"));
 
-                            const paddleVelocity = paddleX - lastPaddleX;
-                            const maxPaddleSpeedEffect = 2; 
-                            
-                            const relativeIntersectX = (paddleX + (currentPaddleW / 2)) - ball.x;
-                            const normalizedRelativeIntersectionX = (relativeIntersectX / (currentPaddleW / 2));
+                            // Calculate relative intersection for angle adjustment
+                            const relativeIntersectX = (paddleX + (totalSaberW / 2)) - ball.x;
+                            const normalizedRelativeIntersectionX = (relativeIntersectX / (totalSaberW / 2));
                             const baseBounceAngle = normalizedRelativeIntersectionX * (Math.PI / 3); 
                             
                             const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
 
                             let newDx = currentSpeed * -Math.sin(baseBounceAngle);
+                            
+                            // Add paddle velocity effect
+                            const paddleVelocity = paddleX - lastPaddleX;
+                            const maxPaddleSpeedEffect = 2; 
                             newDx += (paddleVelocity / 5) * maxPaddleSpeedEffect; 
                             
                             const maxDxMagnitude = currentSpeed * 0.9;
@@ -1495,7 +1616,7 @@
                             ball.dy = -Math.abs(Math.sqrt(currentSpeed * currentSpeed - ball.dx * ball.dx));
                             
                         } else {
-                            // --- FIX: Logic for ball loss and life deduction ---
+                            // Ball is lost. Remove it.
                             if (shieldActive) {
                                 Tone.start().then(() => fanfareSynth.triggerAttackRelease("E3", "8n")); 
                                 shieldActive = false;
@@ -1503,7 +1624,6 @@
                                 gameContainer.classList.remove('shield-active');
                                 ball.dy = -ball.dy; // Shield bounce, no life lost, ball not removed
                             } else {
-                                // Ball is lost. Remove it.
                                 balls.splice(i, 1);
                                 i--; 
 
@@ -1520,7 +1640,6 @@
                                     }
                                 }
                             }
-                            // --- END FIX ---
                         }
                     }
                     
@@ -1572,10 +1691,12 @@
                 if (!gameRunning) return;
                 const relativeX = e.clientX - canvas.getBoundingClientRect().left;
                 
-                const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                const currentBladeW = isPaddleExtended ? 150 : paddleW;
+                const totalSaberW = currentBladeW + hiltW;
 
                 if (relativeX > 0 && relativeX < W) {
-                    paddleX = relativeX - currentPaddleW / 2;
+                    // Position the center of the total saber under the mouse
+                    paddleX = relativeX - totalSaberW / 2;
                 }
             }
 
@@ -1586,10 +1707,12 @@
                 const touch = e.touches[0];
                 const relativeX = touch.clientX - canvas.getBoundingClientRect().left;
 
-                const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                const currentBladeW = isPaddleExtended ? 150 : paddleW;
+                const totalSaberW = currentBladeW + hiltW;
 
                 if (relativeX > 0 && relativeX < W) {
-                    paddleX = relativeX - currentPaddleW / 2;
+                    // Position the center of the total saber under the touch
+                    paddleX = relativeX - totalSaberW / 2;
                 }
             }
             // --- END INPUT HANDLERS ---
