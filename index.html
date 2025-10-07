@@ -26,11 +26,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Align to start, let margin handle centering */
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 20px 0; /* Vertical padding only */
             overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+            width: 100%; /* Ensure body takes full width */
         }
 
         /* Game Container Styling - Focus, Angular, and Glowing */
@@ -40,8 +41,9 @@
             border-radius: 4px; /* Slightly sharper edges */
             box-shadow: 0 0 25px var(--saber-color-glow, rgba(0, 255, 251, 0.4)), 0 0 50px var(--saber-color-glow-light, rgba(0, 255, 251, 0.1)); 
             padding: 20px;
-            max-width: 95vw;
-            width: 600px;
+            width: 95%; /* FLUID WIDTH: Use percentage for reliability */
+            max-width: 600px; /* Hard limit for desktop */
+            margin: 20px auto; /* CRITICAL: Ensure horizontal centering */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -62,8 +64,9 @@
         /* --- MOBILE OPTIMIZATIONS START --- */
         @media (max-width: 640px) {
             .game-container {
-                padding: 15px;
+                padding: 10px; /* REDUCED PADDING for maximum canvas space */
                 gap: 15px;
+                margin: 10px auto;
             }
             h1 {
                 font-size: 1.8rem; /* Smaller title on mobile */
@@ -93,10 +96,9 @@
             cursor: none;
             /* CRITICAL: Ensure touch interactions are handled by JS, not the browser's default actions */
             touch-action: none; 
-            width: 100%;
+            width: 100%; /* Take 100% of the calculated space */
             aspect-ratio: 3 / 2;
             transition: border-color 0.3s, box-shadow 0.3s;
-            /* Ensure visibility even if JS fails */
             min-height: 200px; 
         }
 
@@ -381,12 +383,15 @@
             const ballRadius = 6;
             const paddleH = 8;
             const brickRowCount = 5;
-            const brickColumnCount = 8;
-            const brickW = 60;
-            const brickH = 20;
-            const brickPadding = 10;
+            const brickColumnCount = 8; // Keep fixed number of columns for level layout consistency
+
+            // Dynamic brick properties - will be updated in updateCanvasDimensions()
+            let brickW = 60; 
+            let brickH = 20; 
+            let brickPadding = 10;
             let brickOffsetTop = 40; 
             let brickOffsetLeft = 30; 
+
             const maxLevels = 5;
 
             // --- LIGHTSABER COLOR STATE ---
@@ -574,30 +579,66 @@
                 }
             }
 
+            // REVISED FUNCTION: Dynamically calculate dimensions based on container's computed style
             function updateCanvasDimensions() {
-                const container = document.querySelector('.game-container');
-                const containerWidth = container.clientWidth - 40; // Account for container's 20px padding on left/right
+                const container = document.getElementById('gameContainer');
                 
-                W = Math.min(containerWidth, 600); // Use 600px as the max width
+                // Get the computed style of the container to read padding applied by CSS/media queries
+                const style = window.getComputedStyle(container);
+                const paddingLeft = parseFloat(style.paddingLeft) || 0;
+                const paddingRight = parseFloat(style.paddingRight) || 0;
+                
+                // Target width is the container's clientWidth minus its internal padding
+                const targetWidth = container.clientWidth - paddingLeft - paddingRight;
+
+                // W is the internal drawing width, clamped to a maximum size
+                W = Math.min(targetWidth, 600);
                 H = Math.round(W * (2 / 3)); 
 
+                // Set the internal pixel dimensions of the canvas
                 canvas.width = W;
                 canvas.height = H;
-
-                const totalBrickWidth = brickColumnCount * brickW + (brickColumnCount - 1) * brickPadding;
-                const newBrickOffsetLeft = (W - totalBrickWidth) / 2;
                 
-                brickOffsetLeft = newBrickOffsetLeft > 0 ? newBrickOffsetLeft : 10; 
+                // Set the canvas element's style width to match the internal size (optional, but ensures pixel perfect rendering)
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+
+                // --- BRICK SCALING LOGIC (NEW) ---
+                const BRICK_FIELD_RATIO = 0.95; // Use 95% of W for brick area
+                const brickFieldW = W * BRICK_FIELD_RATIO;
+
+                // Total number of gaps/paddings (8 bricks have 7 paddings in between)
+                const numPaddings = brickColumnCount - 1; 
+
+                // Aim for a Brick Width that is 5 times the padding size (6 units total: 5W + 1P)
+                // Total units = (8 * 5W) + (7 * 1P) = 40 + 7 = 47 units
+                const totalUnits = (brickColumnCount * 5) + numPaddings; 
+                
+                const unitSize = brickFieldW / totalUnits;
+
+                // Update global brick properties to be proportional
+                brickPadding = Math.max(2, Math.round(unitSize * 1)); // Min 2px padding
+                brickW = Math.max(10, Math.round(unitSize * 5)); // Min 10px width
+                brickH = Math.round(H * 0.04); // Proportional height (e.g., 4% of canvas height)
+
+                // Recalculate offset based on the *actual* calculated brick field width
+                const actualBrickFieldW = (brickColumnCount * brickW) + (numPaddings * brickPadding);
+                brickOffsetLeft = (W - actualBrickFieldW) / 2;
+
+                // Ensure brick offset top is relative to the new height
+                brickOffsetTop = Math.max(30, Math.round(H * 0.08)); 
+                // ---------------------------------
 
                 if (stars.length === 0 || W !== canvas.width || H !== canvas.height) { 
-                    initStars(); // Re-initialize stars if canvas size changes significantly
+                    initStars(); 
                 }
 
                 if (paddleX === undefined) {
                     paddleX = (W - paddleW) / 2;
                 } else {
                     // Re-center paddle if resizing caused it to go off screen
-                    paddleX = Math.max(0, Math.min(paddleX, W - (isPaddleExtended ? 150 : paddleW))); 
+                    const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                    paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW)); 
                 }
                 
                 // Initialize/reset all balls
@@ -786,6 +827,7 @@
                 if (type === PU_TYPE.EXTEND) {
                     clearPowerUpTimer(); // Clear existing
                     isPaddleExtended = true;
+                    // Note: 150 is the max value from the slider, which is now scaled proportionally
                     paddleW = 150; 
                     powerUpTimer = setTimeout(clearPowerUpTimer, PU_DURATION);
                 } else if (type === PU_TYPE.MULTI) {
@@ -1011,6 +1053,7 @@
                         const brick = bricks[c][r];
                         if (brick.status > 0) {
                             totalBricks++;
+                            // Use dynamically calculated dimensions
                             let brickX = (c * (brickW + brickPadding)) + brickOffsetLeft;
                             let brickY = (r * (brickH + brickPadding)) + brickOffsetTop;
                             
@@ -1036,6 +1079,7 @@
                         }
                     }
                 }
+                // Check for level clear after all bricks are drawn
                 if (totalBricks === 0) endGame(true); 
             }
 
@@ -1046,6 +1090,7 @@
                     for (let r = 0; r < brickRowCount; r++) {
                         const brick = bricks[c][r];
                         if (brick.status > 0) {
+                            // Use current dynamic brick dimensions (brickW/brickH are globals)
                             if (ball.x > brick.x && ball.x < brick.x + brickW && ball.y > brick.y && ball.y < brick.y + brickH) {
                                 ball.dy = -ball.dy; 
                                 brick.status--; 
@@ -1288,7 +1333,9 @@
 
             function draw() {
                 
-                if (W === undefined) updateCanvasDimensions(); // Ensure dimensions are set before drawing
+                // CRITICAL: Call this every frame to ensure the brick layout adapts instantly 
+                // if the screen size changes while the game is running (e.g., orientation change)
+                if (W === undefined) updateCanvasDimensions(); 
                 
                 drawStars();
                 
@@ -1381,14 +1428,16 @@
                         if (!isPaddleExtended) {
                              paddleW = parseInt(e.target.value, 10);
                              if (paddleX !== undefined) {
-                                 paddleX = Math.max(0, Math.min(paddleX, W - paddleW));
+                                 const currentPaddleW = isPaddleExtended ? 150 : paddleW;
+                                 paddleX = Math.max(0, Math.min(paddleX, W - currentPaddleW));
                              }
                         }
                     });
                 }
 
                 // 5. Event listeners
-                window.addEventListener('resize', updateCanvasDimensions);
+                // Call updateCanvasDimensions on resize to ensure responsiveness (e.g., orientation change)
+                window.addEventListener('resize', updateCanvasDimensions); 
                 document.addEventListener('mousemove', mouseMoveHandler, false);
                 // Touch listener attached directly to the canvas to ensure we capture movement over the game area
                 canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
@@ -1410,4 +1459,3 @@
     </script>
 </body>
 </html>
-
