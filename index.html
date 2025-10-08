@@ -989,26 +989,37 @@
                     clearPowerUpTimer();
                     gameState.isPaddleExtended = true;
                     gameState.powerUpTimer = setTimeout(clearPowerUpTimer, PU_DURATION);
-                } else if (type === PU_TYPE.MULTI) {
-                    const currentBall = gameState.balls[0] || {x: W/2, y: H-30, dx: 4, dy: -4}; 
-                    const speed = Math.sqrt(currentBall.dx * currentBall.dx + currentBall.dy * currentBall.dy);
-                    gameState.balls.push({
-                    x: W / 2,
-                    y: H - 10 - ballRadius,
-                    dx: 0,
-                    dy: 0
+                } 
+else if (type === PU_TYPE.MULTI) {
+    if (gameState.balls.length === 0) {
+        gameState.balls.push({
+            x: W / 2,
+            y: H - 10 - ballRadius,
+            dx: 0,
+            dy: 0
+        });
+        gameState.ballReady = true;
+        document.getElementById('launchMessage').style.display = 'block';
+    } else {
+        // For each ball in play, spawn two more with slightly different angles
+        const newBalls = [];
+        gameState.balls.forEach(ball => {
+            const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) || 4;
+            for (let offset of [-0.3, 0.3]) {
+                const angle = Math.atan2(ball.dy, ball.dx) + offset;
+                newBalls.push({
+                    x: ball.x,
+                    y: ball.y,
+                    dx: speed * Math.cos(angle),
+                    dy: speed * Math.sin(angle)
                 });
-                gameState.ballReady = true;
-                document.getElementById('launchMessage').style.display = 'block'; 
-                    gameState.balls.push({
-                    x: W / 2,
-                    y: H - 10 - ballRadius,
-                    dx: 0,
-                    dy: 0
-                });
-                gameState.ballReady = true;
-                document.getElementById('launchMessage').style.display = 'block';
-                } else if (type === PU_TYPE.SHIELD) {
+            }
+        });
+        gameState.balls.push(...newBalls);
+        // Do NOT set ballReady or show the launch overlay!
+    }
+}
+ else if (type === PU_TYPE.SHIELD) {
                     if (gameState.shieldActive) return; 
                     
                     clearPowerUpTimer(); // Clear any existing timer/effect first
