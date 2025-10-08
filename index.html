@@ -1582,8 +1582,14 @@
                 clampPaddleX(); 
 
                 if (gameState.running && gameState.levelComplete) {
-                    endGame(true);
-                }
+    gameState.running = false; // Stop main loop actions during transition
+    if (gameState.currentLevel < BOSS_LEVEL) {
+        nextLevel();
+    } else {
+        endGame(true); // Final victory sequence
+    }
+    return; // Prevent further actions this frame
+}
                 
                 draw(); 
                 
