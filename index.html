@@ -371,7 +371,7 @@
             const livesValueEl = document.getElementById('livesValue');
             const levelValueEl = document.getElementById('levelValue');
 
-            const ballRadius = 6;
+            const ballRadius = 10; // INCREASED: Changed from 6 to 10 for better visibility.
             const paddleH = 8;
             const hiltW = 40; // Fixed: Width of the hilt for game physics/collision
             const brickRowCount = 5;
@@ -510,6 +510,7 @@
                     if (scores.length > 0) {
                         scores.forEach((s, index) => {
                             const displayUserId = s.userId === userId ? 'YOU' : s.userId.substring(0, 8) + '...';
+                            const li = document.createElement('li'); // FIX: Added list item creation
                             li.innerHTML = `${index + 1}. ${displayUserId} <span>${s.score}</span>`;
                             list.appendChild(li);
                         });
@@ -701,14 +702,16 @@
                 clearPowerUpTimer();
                 
                 gameState.balls = [];
-                const speed = 3.0 + (gameState.currentLevel - 1) * 0.4; 
+                // Adjusted initial speed to feel right with the larger ball size
+                const baseSpeed = 4.0; 
+                const speed = baseSpeed + (gameState.currentLevel - 1) * 0.4; 
                 const angleFactor = 0.7; 
                 const initialDx = speed * (Math.random() < 0.5 ? angleFactor : -angleFactor); 
                 const initialDy = -Math.abs(speed * Math.sqrt(1 - angleFactor * angleFactor)); 
 
                 gameState.balls.push({
                     x: W / 2,
-                    y: H - 30,
+                    y: H - 10 - ballRadius, // Adjusted Y starting position based on new ball radius
                     dx: initialDx,
                     dy: initialDy
                 });
@@ -818,7 +821,7 @@
                 const saberY = H - paddleH - 10; 
                 
                 // Check collision with the entire saber (hilt + blade)
-                if (ball.x > gameState.paddleX && ball.x < gameState.paddleX + totalSaberW && ball.y > saberY) {
+                if (ball.x > gameState.paddleX && ball.x < gameState.paddleX + totalSaberW && ball.y + ballRadius > saberY) {
                     ball.dy = -ball.dy; 
                     Tone.start().then(() => saberSynth.triggerAttackRelease("C4", "8n"));
 
@@ -878,8 +881,19 @@
                 
                 const { x, y, w, h } = gameState.boss;
 
-                if (ball.x > x && ball.x < x + w && ball.y > y && ball.y < y + h) {
-                    ball.dy = -ball.dy; 
+                // Simple AABB collision for the boss
+                if (ball.x + ballRadius > x && ball.x - ballRadius < x + w && ball.y + ballRadius > y && ball.y - ballRadius < y + h) {
+                    
+                    // Determine where to reverse dy (top/bottom) or dx (sides)
+                    const prevX = ball.x - ball.dx;
+                    const prevY = ball.y - ball.dy;
+
+                    if (prevY + ballRadius <= y || prevY - ballRadius >= y + h) {
+                        ball.dy = -ball.dy;
+                    } else {
+                        ball.dx = -ball.dx;
+                    }
+                    
                     gameState.boss.health--;
                     gameState.boss.isHit = true; 
 
@@ -909,8 +923,18 @@
                     for (let r = 0; r < brickRowCount; r++) {
                         const brick = gameState.bricks[c][r];
                         if (brick.status > 0) {
-                            if (ball.x > brick.x && ball.x < brick.x + brickW && ball.y > brick.y && ball.y < brick.y + brickH) {
+                            const brickX = brick.x;
+                            const brickY = brick.y;
+
+                            // AABB collision detection including ball radius
+                            if (ball.x + ballRadius > brickX && ball.x - ballRadius < brickX + brickW && 
+                                ball.y + ballRadius > brickY && ball.y - ballRadius < brickY + brickH) {
+                                
+                                // Simple vertical flip
                                 ball.dy = -ball.dy; 
+                                
+                                // Complex collision detection logic (omitted for single-file size constraint, using simple flip)
+                                
                                 brick.status--; 
                                 
                                 if (brick.type === 3) {
@@ -1183,14 +1207,50 @@
             }
 
             function drawBall(ball) { 
+                // Droid Body (Metallic Grey Sphere)
+                const r = ballRadius;
+                
+                // 1. Shadow for depth (dark metallic base)
                 ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+                ctx.arc(ball.x, ball.y, r, 0, Math.PI * 2);
+                ctx.fillStyle = '#444455';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+
+                // 2. Main body (lighter metallic effect)
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, r * 0.9, 0, Math.PI * 2);
+                ctx.fillStyle = '#9999aa';
+                ctx.fill();
+                ctx.closePath();
+
+                // 3. Inner Detail (Grid/Panels)
+                ctx.strokeStyle = '#555566';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                // Vertical line
+                ctx.moveTo(ball.x, ball.y - r * 0.9);
+                ctx.lineTo(ball.x, ball.y + r * 0.9);
+                // Horizontal line
+                ctx.moveTo(ball.x - r * 0.9, ball.y);
+                ctx.lineTo(ball.x + r * 0.9, ball.y);
+                // 45 degree lines for grid effect
+                ctx.moveTo(ball.x - r * 0.6, ball.y - r * 0.6);
+                ctx.lineTo(ball.x + r * 0.6, ball.y + r * 0.6);
+                ctx.moveTo(ball.x + r * 0.6, ball.y - r * 0.6);
+                ctx.lineTo(ball.x - r * 0.6, ball.y + r * 0.6);
+                
+                ctx.stroke();
+
+                // 4. Laser Aperture / Glow (The hitting point)
+                ctx.beginPath();
+                ctx.arc(ball.x + r * 0.4, ball.y + r * 0.4, r * 0.3, 0, Math.PI * 2);
                 ctx.fillStyle = '#ff33cc';
                 ctx.shadowBlur = 10;
                 ctx.shadowColor = '#ff33cc';
-                ctx.fill();
-                ctx.shadowBlur = 5;
-                ctx.shadowColor = '#fff'; 
                 ctx.fill();
                 ctx.closePath();
                 ctx.shadowBlur = 0; 
