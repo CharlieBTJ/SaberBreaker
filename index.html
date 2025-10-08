@@ -371,11 +371,11 @@
             const livesValueEl = document.getElementById('livesValue');
             const levelValueEl = document.getElementById('levelValue');
 
-            const ballRadius = 10; // INCREASED: Changed from 6 to 10 for better visibility.
-            const paddleH = 8;
-            const hiltW = 40; // Fixed: Width of the hilt for game physics/collision
-            const brickRowCount = 5;
-            const brickColumnCount = 8;
+            const ballRadius = 10; // Training droid size
+            const paddleH = 8; // Blade height
+            const hiltW = 40; // The fixed width of the central grip/hilt
+            const BRICK_ROW_COUNT = 5;
+            const BRICK_COLUMN_COUNT = 8;
             const BOSS_LEVEL = 6; 
             const maxLevels = 5; 
             const PU_DURATION = 10000;
@@ -392,7 +392,8 @@
                 score: 0,
                 lives: 3,
                 currentLevel: 1,
-                paddleW: 100, // FIXED Blade width (default)
+                // paddleW is now the TOTAL EFFECTIVE LENGTH of the lightsaber (blade + hilt)
+                paddleW: 100, 
                 paddleX: 0, 
                 lastPaddleX: 0,
                 shakeDuration: 0,
@@ -576,8 +577,6 @@
                 document.documentElement.style.setProperty('--saber-color-glow', colorObj.glow);
                 document.documentElement.style.setProperty('--saber-color-glow-light', colorObj.shadow);
 
-                // Removed slider thumb styling logic
-
                 
                 // Handle active class on swatches
                 const swatches = document.querySelectorAll('.color-swatch');
@@ -599,7 +598,8 @@
 
             function clampPaddleX() {
                  if (W === undefined || gameState.paddleX === undefined) return;
-                 const currentTotalPaddleW = (gameState.isPaddleExtended ? 150 : gameState.paddleW) + hiltW; 
+                 // The paddleW now represents the TOTAL width of the lightsaber.
+                 const currentTotalPaddleW = gameState.isPaddleExtended ? 150 : gameState.paddleW; 
                  gameState.paddleX = Math.max(0, Math.min(gameState.paddleX, W - currentTotalPaddleW));
             }
 
@@ -621,16 +621,16 @@
                 // --- BRICK SCALING LOGIC ---
                 const BRICK_FIELD_RATIO = 0.95;
                 const brickFieldW = W * BRICK_FIELD_RATIO;
-                const numPaddings = brickColumnCount - 1; 
+                const numPaddings = BRICK_COLUMN_COUNT - 1; 
 
-                const totalUnits = (brickColumnCount * 5) + numPaddings; 
+                const totalUnits = (BRICK_COLUMN_COUNT * 5) + numPaddings; 
                 const unitSize = brickFieldW / totalUnits;
 
                 brickPadding = Math.max(2, Math.round(unitSize * 1));
                 brickW = Math.max(10, Math.round(unitSize * 5));
                 brickH = Math.round(H * 0.04); 
 
-                const actualBrickFieldW = (brickColumnCount * brickW) + (numPaddings * brickPadding);
+                const actualBrickFieldW = (BRICK_COLUMN_COUNT * brickW) + (numPaddings * brickPadding);
                 brickOffsetLeft = (W - actualBrickFieldW) / 2;
                 brickOffsetTop = Math.max(30, Math.round(H * 0.08)); 
                 
@@ -644,9 +644,11 @@
                     gameState.boss.x = (W - gameState.boss.w) / 2;
                     gameState.boss.y = H * 0.05;
                 }
-
+                
+                // Initialize/update paddle position based on its total width (paddleW)
+                const initialSaberW = gameState.paddleW;
                 if (gameState.paddleX === 0) {
-                    gameState.paddleX = (W - (gameState.paddleW + hiltW)) / 2; 
+                    gameState.paddleX = (W - initialSaberW) / 2; 
                 }
                 
                 if (gameState.balls.length === 0 && !gameState.running) {
@@ -680,9 +682,9 @@
                 } else {
                     const layout = levelData[level - 1]; 
                     gameState.bricks = [];
-                    for (let c = 0; c < brickColumnCount; c++) {
+                    for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
                         gameState.bricks[c] = [];
-                        for (let r = 0; r < brickRowCount; r++) {
+                        for (let r = 0; r < BRICK_ROW_COUNT; r++) {
                             const type = layout[r][c];
                             gameState.bricks[c][r] = { x: 0, y: 0, status: type, type: type }; 
                         }
@@ -716,7 +718,9 @@
                     dy: initialDy
                 });
 
-                gameState.paddleX = (W - (gameState.paddleW + hiltW)) / 2; // Adjust for total paddle width
+                // Use the default paddle width (100) for calculating starting position
+                const initialSaberW = gameState.paddleW; 
+                gameState.paddleX = (W - initialSaberW) / 2; 
                 gameState.lastPaddleX = gameState.paddleX;
             }
 
@@ -816,16 +820,25 @@
             // --- COLLISION HANDLERS ---
             
             function checkBallPaddleCollision(ball, currentSpeed) {
-                const currentBladeW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
-                const totalSaberW = currentBladeW + hiltW;
+                // currentSaberW is the TOTAL effective width of the lightsaber (blade + hilt in the middle)
+                const currentSaberW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
+                const totalSaberW = currentSaberW; 
                 const saberY = H - paddleH - 10; 
                 
-                // Check collision with the entire saber (hilt + blade)
-                if (ball.x > gameState.paddleX && ball.x < gameState.paddleX + totalSaberW && ball.y + ballRadius > saberY) {
+                // New: Check collision against the total vertical height occupied by the blade and hilt
+                const hiltHeight = paddleH + 5; 
+                const hiltOffset = (hiltHeight - paddleH) / 2; // 2.5px
+                const saberTop = saberY - hiltOffset;
+                const saberBottom = saberY + paddleH + hiltOffset; 
+
+                // Check collision with the entire saber area (horizontally and vertically)
+                if (ball.x > gameState.paddleX && ball.x < gameState.paddleX + totalSaberW && 
+                    ball.y + ballRadius > saberTop && ball.y - ballRadius < saberBottom) {
+                    
                     ball.dy = -ball.dy; 
                     Tone.start().then(() => saberSynth.triggerAttackRelease("C4", "8n"));
 
-                    // Calculate relative intersection for angle adjustment
+                    // Calculate relative intersection for angle adjustment using totalSaberW
                     const relativeIntersectX = (gameState.paddleX + (totalSaberW / 2)) - ball.x;
                     const normalizedRelativeIntersectionX = (relativeIntersectX / (totalSaberW / 2));
                     const baseBounceAngle = normalizedRelativeIntersectionX * (Math.PI / 3); 
@@ -919,8 +932,8 @@
 
             function brickCollisionDetection(ball) { 
                 let brickHit = false;
-                for (let c = 0; c < brickColumnCount; c++) {
-                    for (let r = 0; r < brickRowCount; r++) {
+                for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
+                    for (let r = 0; r < BRICK_ROW_COUNT; r++) {
                         const brick = gameState.bricks[c][r];
                         if (brick.status > 0) {
                             const brickX = brick.x;
@@ -1009,8 +1022,8 @@
             
             function drawBricks() {
                 let totalBricks = 0;
-                for (let c = 0; c < brickColumnCount; c++) {
-                    for (let r = 0; r < brickRowCount; r++) {
+                for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
+                    for (let r = 0; r < BRICK_ROW_COUNT; r++) {
                         const brick = gameState.bricks[c][r];
                         if (brick.status > 0) {
                             totalBricks++;
@@ -1051,7 +1064,7 @@
                 gameState.isPaddleExtended = false;
                 gameState.shieldActive = false;
                 if (gameState.powerUpTimer) clearTimeout(gameState.powerUpTimer);
-                gameState.paddleW = 100; // Reset to fixed default size
+                gameState.paddleW = 100; // Reset to fixed default size (total width)
                 updateUI();
             }
 
@@ -1081,12 +1094,17 @@
                 for (let i = 0; i < gameState.powerUps.length; i++) {
                     const pu = gameState.powerUps[i];
                     pu.y += 2;
-                    const paddleYStart = H - 18;
-                    const currentBladeW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
-                    const totalSaberW = currentBladeW + hiltW;
+                    
+                    // The total vertical area of the paddle for collision detection
+                    const hiltHeight = paddleH + 5; 
+                    const hiltOffset = (hiltHeight - paddleH) / 2; // 2.5px
+                    const paddleYStart = H - 10 - hiltOffset; // Top edge of the hilt area
+
+                    // The total width of the paddle is currentSaberW (100 or 150)
+                    const currentSaberW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
 
                     if (pu.y + pu.r > paddleYStart && pu.y - pu.r < H && 
-                        pu.x > gameState.paddleX && pu.x < gameState.paddleX + totalSaberW) 
+                        pu.x > gameState.paddleX && pu.x < gameState.paddleX + currentSaberW) 
                     {
                         applyPowerUp(pu.type);
                         gameState.powerUps.splice(i, 1);
@@ -1257,93 +1275,103 @@
             }
 
             function drawPaddle() { 
-                const currentBladeW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
-                const totalSaberW = currentBladeW + hiltW; 
-                const saberY = H - paddleH - 10;
+                // currentSaberW is the TOTAL effective width of the lightsaber paddle
+                const currentSaberW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
+                const saberY = H - paddleH - 10; // Top edge of the 8px blade (Y-axis)
                 
+                const hiltHeight = paddleH + 5; // Hilt is 13px tall
+                
+                // For a single blade:
+                const bladeWidth = currentSaberW - hiltW; // Blade fills the remaining space
+                
+                // Hilt is placed on the left side of the total paddle area
                 const hiltX = gameState.paddleX;
-                const hiltY = saberY;
-                const hiltHeight = paddleH + 5; 
+                
+                // Blade starts immediately to the right of the hilt
                 const bladeX = gameState.paddleX + hiltW;
 
+                // Calculate the vertical offset to center the hilt (13px) over the blade (8px)
+                // This value is (hiltHeight - paddleH) / 2 = (13 - 8) / 2 = 2.5px
+                const hiltOffset = (hiltHeight - paddleH) / 2;
+                
                 ctx.save();
+                
+                // --- 1. Draw Hilt (Now on the far left) ---
+                // Translate context to the start of the hilt, shifted UP by hiltOffset (2.5px)
+                ctx.translate(hiltX, saberY - hiltOffset); 
 
                 switch (gameState.currentSaberColor) {
                     case 'red': 
                         ctx.fillStyle = '#222222';
-                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+                        ctx.fillRect(0, 0, hiltW, hiltHeight); 
                         ctx.fillStyle = '#555555';
-                        ctx.fillRect(hiltX + 5, hiltY + 2, 5, hiltHeight - 4);
-                        ctx.fillRect(hiltX + 15, hiltY + 2, 15, hiltHeight - 4);
+                        ctx.fillRect(5, 2, 5, hiltHeight - 4);
+                        ctx.fillRect(15, 2, 15, hiltHeight - 4);
                         ctx.fillStyle = '#cc0000';
-                        ctx.beginPath();
-                        ctx.moveTo(hiltX + hiltW, hiltY);
-                        ctx.lineTo(hiltX + hiltW - 10, hiltY);
-                        ctx.lineTo(hiltX + hiltW - 5, hiltY + hiltHeight / 2);
-                        ctx.lineTo(hiltX + hiltW - 10, hiltY + hiltHeight);
-                        ctx.lineTo(hiltX + hiltW, hiltY + hiltHeight);
-                        ctx.fill();
+                        ctx.fillRect(hiltW - 5, 0, 5, hiltHeight); // Emitter detail
                         ctx.fillStyle = '#cccccc';
-                        ctx.fillRect(hiltX + hiltW - 2, hiltY, 2, hiltHeight);
+                        ctx.fillRect(hiltW - 2, 0, 2, hiltHeight); // Emitter edge
                         break;
 
                     case 'green': 
-                        const yodaHiltW = 30; 
-                        const yodaHiltX = hiltX + (hiltW - yodaHiltW); 
                         ctx.fillStyle = '#B87333'; 
-                        ctx.fillRect(yodaHiltX, hiltY, yodaHiltW, hiltHeight);
+                        ctx.fillRect(0, 0, hiltW, hiltHeight);
                         ctx.fillStyle = '#3a1f0f';
-                        ctx.fillRect(yodaHiltX + 3, hiltY + 2, yodaHiltW - 6, hiltHeight - 4);
+                        ctx.fillRect(3, 2, hiltW - 6, hiltHeight - 4);
                         ctx.fillStyle = '#00ff00';
-                        ctx.fillRect(hiltX + hiltW - 5, hiltY, 5, hiltHeight); 
+                        ctx.fillRect(hiltW - 5, 0, 5, hiltHeight); // Emitter detail
                         ctx.fillStyle = '#cccccc';
-                        ctx.fillRect(hiltX + hiltW - 2, hiltY, 2, hiltHeight);
+                        ctx.fillRect(hiltW - 2, 0, 2, hiltHeight); // Emitter edge
                         break; 
 
                     case 'purple': 
                         ctx.fillStyle = '#333333';
-                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+                        ctx.fillRect(0, 0, hiltW, hiltHeight);
                         ctx.fillStyle = '#FFD700'; 
-                        ctx.fillRect(hiltX + 5, hiltY, 5, hiltHeight); 
-                        ctx.fillRect(hiltX + 15, hiltY, 5, hiltHeight);
+                        ctx.fillRect(5, 0, 5, hiltHeight); 
+                        ctx.fillRect(15, 0, 5, hiltHeight);
                         ctx.fillStyle = '#cccccc';
-                        ctx.fillRect(hiltX + hiltW * 0.8, hiltY, 2, hiltHeight); 
+                        ctx.fillRect(hiltW * 0.8, 0, 2, hiltHeight); 
                         ctx.fillStyle = '#cc00ff';
                         ctx.beginPath();
-                        ctx.arc(hiltX + hiltW * 0.6, hiltY + hiltHeight / 2, 3, 0, Math.PI * 2);
+                        ctx.arc(hiltW * 0.6, hiltHeight / 2, 3, 0, Math.PI * 2);
                         ctx.fill();
                         break;
                         
                     case 'cyan': 
                     default:
                         ctx.fillStyle = '#777777'; 
-                        ctx.fillRect(hiltX, hiltY, hiltW, hiltHeight);
+                        ctx.fillRect(0, 0, hiltW, hiltHeight);
                         ctx.fillStyle = '#111111'; 
                         const gripSpacing = hiltW / 4;
-                        ctx.fillRect(hiltX + gripSpacing * 0.5, hiltY + 2, gripSpacing * 0.5, hiltHeight - 4);
-                        ctx.fillRect(hiltX + gripSpacing * 2.5, hiltY + 2, gripSpacing * 0.5, hiltHeight - 4);
+                        ctx.fillRect(gripSpacing * 0.5, 2, gripSpacing * 0.5, hiltHeight - 4);
+                        ctx.fillRect(gripSpacing * 2.5, 2, gripSpacing * 0.5, hiltHeight - 4);
                         ctx.fillStyle = '#cccccc'; 
-                        ctx.fillRect(hiltX + hiltW * 0.8, hiltY, 2, hiltHeight);
+                        ctx.fillRect(hiltW * 0.8, 0, 2, hiltHeight); // Emitter edge
                         break;
                 }
                 
-                ctx.restore(); 
-
+                ctx.restore(); // Restore context to (0, 0)
+                
+                // --- 2. Draw Blade (Single Segment to the right) ---
                 ctx.shadowBlur = 25; 
                 ctx.shadowColor = gameState.lightsaberColor;
                 
+                // Outer Blade
                 ctx.beginPath();
-                ctx.rect(bladeX, saberY, currentBladeW, paddleH);
+                ctx.rect(bladeX, saberY, bladeWidth, paddleH);
                 ctx.fillStyle = gameState.lightsaberColor;
                 ctx.fill();
                 
+                // Inner Core
                 ctx.shadowBlur = 0;
-                const coreW = currentBladeW * 0.8;
-                const coreX = bladeX + (currentBladeW - coreW) / 2;
-                ctx.rect(coreX, saberY + 3, coreW, paddleH - 6);
+                const coreH = paddleH - 6;
+                const coreY = saberY + 3;
+                
+                ctx.rect(bladeX, coreY, bladeWidth, coreH);
                 ctx.fillStyle = '#ffffff'; 
                 ctx.fill();
-
+                
                 ctx.closePath();
                 ctx.shadowBlur = 0;
             }
@@ -1650,8 +1678,6 @@
                     });
                     updateSaberColor(gameState.currentSaberColor);
                 }
-
-                // Removed paddle size slider input listener
                 
                 window.addEventListener('resize', updateCanvasDimensions); 
                 document.addEventListener('mousemove', mouseMoveHandler, false);
@@ -1672,11 +1698,11 @@
                 if (!gameState.running) return;
                 const relativeX = e.clientX - canvas.getBoundingClientRect().left;
                 
-                const currentBladeW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
-                const totalSaberW = currentBladeW + hiltW;
+                // Use the total width of the saber for centering the input
+                const currentSaberW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
 
                 if (relativeX > 0 && relativeX < W) {
-                    gameState.paddleX = relativeX - totalSaberW / 2;
+                    gameState.paddleX = relativeX - currentSaberW / 2;
                 }
             }
 
@@ -1687,11 +1713,11 @@
                 const touch = e.touches[0];
                 const relativeX = touch.clientX - canvas.getBoundingClientRect().left;
 
-                const currentBladeW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
-                const totalSaberW = currentBladeW + hiltW;
+                // Use the total width of the saber for centering the input
+                const currentSaberW = gameState.isPaddleExtended ? 150 : gameState.paddleW;
 
                 if (relativeX > 0 && relativeX < W) {
-                    gameState.paddleX = relativeX - totalSaberW / 2;
+                    gameState.paddleX = relativeX - currentSaberW / 2;
                 }
             }
             // --- END INPUT HANDLERS ---
